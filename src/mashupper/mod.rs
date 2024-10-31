@@ -1,3 +1,4 @@
-mod deezer;
+mod apis;
+pub mod util;
 
-pub use deezer::util::get_initial_track_search;
+pub use util::get_initial_track_search;
