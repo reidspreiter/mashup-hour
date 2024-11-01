@@ -3,26 +3,22 @@ use super::apis::deezer::{find_track, search_tracks, DeezerPaginationResponse, T
 use crate::{Error, Result};
 use log::{debug, error, info, warn};
 use rand::Rng;
+use random_word::{gen_starts_with, Lang};
 use tokio::time::{sleep, Duration};
 
 fn get_random_query() -> String {
     let mut rng = rand::thread_rng();
-
-    // generate a lowercase value and capitalize it 50% of the time
-    let letter1: u8 = rng.gen_range(97..=122);
-    let letter2: u8 = rng.gen_range(97..=122);
-    let query = format!("{}{}", letter1 as char, letter2 as char);
-
-    format!(
-        "{}\"{}\"",
-        match rng.gen_range(0..=2) {
-            0 => "artist:",
-            1 => "track:",
-            2 => "album:",
-            _ => "",
-        },
-        query
-    )
+    for _ in 0..10 {
+        let letter = rng.gen_range(97..=122) as u8 as char;
+        debug!("Letter: {}", letter);
+        if let Some(query) = gen_starts_with(letter, Lang::En) {
+            return query.to_owned();
+        }
+    }
+    debug!("No word found");
+    let letter1 = rng.gen_range(97..=122) as u8 as char;
+    let letter2 = rng.gen_range(97..=122) as u8 as char;
+    format!("{}{}", letter1, letter2)
 }
 
 async fn initial_track_search() -> Result<APIResult<DeezerPaginationResponse<TrackList>>> {
