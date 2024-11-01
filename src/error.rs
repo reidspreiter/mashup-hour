@@ -14,6 +14,12 @@ pub enum Error {
     },
 
     #[from]
+    IndexError {
+        index: usize,
+        length: usize,
+    },
+
+    #[from]
     ReqwestError(reqwest::Error),
 
     #[from]
