@@ -1,4 +1,5 @@
-mod apis;
+pub mod apis;
+pub mod cover;
+pub mod manager;
+pub mod track;
 pub mod util;
-
-pub use util::get_initial_track_search;
