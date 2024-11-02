@@ -1,11 +1,13 @@
-use super::base::{request, APIResult, Pagination};
+use std::{io::BufRead, str::Bytes};
+
+use super::base::{request_bytes, request_model, APIResult, Pagination};
 use crate::Result;
 use serde::{de::DeserializeOwned, Deserialize};
 
 #[derive(Debug, Deserialize)]
 pub struct DeezerPaginationResponse<T> {
     pub data: T,
-    pub next: String,
+    pub next: Option<String>,
     pub total: u64,
 }
 
@@ -21,7 +23,7 @@ where
         25
     }
 
-    fn next(&self) -> &String {
+    fn next(&self) -> &Option<String> {
         &self.next
     }
 }
@@ -66,10 +68,14 @@ pub struct Track {
 
 pub async fn search_tracks(query: &str) -> Result<APIResult<DeezerPaginationResponse<TrackList>>> {
     let url = format!("https://api.deezer.com/search/track?q={}", query);
-    request::<DeezerPaginationResponse<TrackList>>(&url).await
+    request_model::<DeezerPaginationResponse<TrackList>>(&url).await
 }
 
 pub async fn find_track(track_id: &u64) -> Result<APIResult<Track>> {
     let url = format!("https://api.deezer.com/track/{}", track_id);
-    request::<Track>(&url).await
+    request_model::<Track>(&url).await
+}
+
+pub async fn album_image(url: &str) -> Result<APIResult<bytes::Bytes>> {
+    request_bytes(&url).await
 }
