@@ -26,17 +26,15 @@ pub async fn create_checkered_image(path1: &PathBuf, path2: &PathBuf) -> Result<
     let step_height = height / rng.gen_range(2..=20);
     let step_width = width / rng.gen_range(2..=20);
 
-    // Iterate over the image in 10x10 pixel blocks
     for y in (0..height).step_by(step_height as usize) {
         for x in (0..width).step_by(step_width as usize) {
-            // Determine the source image based on the current block's position
-            let use_img1 = (x / step_width + y / step_height) % 2 == 0; // Checkered pattern
+            let use_img1 = (x / step_width + y / step_height) % 2 == 0;
 
-            // Determine the size of the block (may be less than 10 at the edges)
+            // Determine the size of the block (may be less than normal at the edges)
+            // TODO: make full blocks centered, and remaining edges compensated on all sides
             let block_width = (x + step_width).min(width) - x;
             let block_height = (y + step_height).min(height) - y;
 
-            // Copy the block from the appropriate image
             let source_image = if use_img1 { &img1 } else { &img2 };
 
             for block_y in 0..block_height {
