@@ -20,10 +20,16 @@ pub enum Error {
     },
 
     #[from]
+    ImageError(image::error::ImageError),
+
+    #[from]
     ReqwestError(reqwest::Error),
 
     #[from]
     SerdeJSONError(serde_json::Error),
+
+    #[from]
+    IOError(std::io::Error),
 }
 
 impl Error {
