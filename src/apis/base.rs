@@ -3,7 +3,7 @@ use reqwest::{Client, Method, Response};
 use serde::{de::DeserializeOwned, Serialize};
 
 #[derive(Serialize)]
-pub struct SerializableNone;
+struct SerializableNone;
 
 pub enum RequestMethod {
     GET,
@@ -50,7 +50,31 @@ where
     }
 }
 
-async fn request<T>(
+pub async fn request<T>(
+    method: RequestMethod,
+    url: &str,
+    headers: Option<Vec<(&str, &str)>>,
+) -> Result<APIResult<T>>
+where
+    T: DeserializeOwned,
+{
+    request_model::<T, SerializableNone>(method, url, headers, None::<&SerializableNone>).await
+}
+
+pub async fn request_with_json<T, Y>(
+    method: RequestMethod,
+    url: &str,
+    headers: Option<Vec<(&str, &str)>>,
+    json_body: Option<&Y>,
+) -> Result<APIResult<T>>
+where
+    T: DeserializeOwned,
+    Y: Serialize,
+{
+    request_model::<T, Y>(method, url, headers, json_body).await
+}
+
+async fn _request<T>(
     method: RequestMethod,
     url: &str,
     headers: Option<Vec<(&str, &str)>>,
@@ -82,7 +106,7 @@ where
     })
 }
 
-pub async fn request_model<T, Y>(
+async fn request_model<T, Y>(
     method: RequestMethod,
     url: &str,
     headers: Option<Vec<(&str, &str)>>,
@@ -92,8 +116,9 @@ where
     T: DeserializeOwned,
     Y: Serialize,
 {
-    let res = request(method, url, headers, json_body).await?;
+    let res = _request(method, url, headers, json_body).await?;
     let text = res.text().await?;
+    println!("{text}");
     let model: T = serde_json::from_str(&text)?;
     Ok(APIResult {
         url: url.to_string(),

@@ -1,4 +1,4 @@
-use super::base::{request_model, APIResult, Pagination, RequestMethod, SerializableNone};
+use super::base::{request, APIResult, Pagination, RequestMethod};
 use crate::Result;
 use serde::{de::DeserializeOwned, Deserialize};
 
@@ -68,22 +68,10 @@ pub struct Track {
 
 pub async fn search_tracks(query: &str) -> Result<APIResult<DeezerPaginationResponse<TrackList>>> {
     let url = format!("{DEEZER_URL}/search/track?q={query}");
-    request_model::<DeezerPaginationResponse<TrackList>, SerializableNone>(
-        RequestMethod::GET,
-        &url,
-        None,
-        None::<&SerializableNone>,
-    )
-    .await
+    request::<DeezerPaginationResponse<TrackList>>(RequestMethod::GET, &url, None).await
 }
 
 pub async fn find_track(track_id: &u64) -> Result<APIResult<Track>> {
     let url = format!("https://api.deezer.com/track/{track_id}");
-    request_model::<Track, SerializableNone>(
-        RequestMethod::GET,
-        &url,
-        None,
-        None::<&SerializableNone>,
-    )
-    .await
+    request::<Track>(RequestMethod::GET, &url, None).await
 }
