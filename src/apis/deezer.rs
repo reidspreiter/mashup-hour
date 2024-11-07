@@ -1,8 +1,8 @@
-use std::{io::BufRead, str::Bytes};
-
-use super::base::{request_bytes, request_model, APIResult, Pagination};
+use super::base::{request_model, APIResult, Pagination, RequestMethod, SerializableNone};
 use crate::Result;
 use serde::{de::DeserializeOwned, Deserialize};
+
+const DEEZER_URL: &str = "https://api.deezer.com";
 
 #[derive(Debug, Deserialize)]
 pub struct DeezerPaginationResponse<T> {
@@ -16,7 +16,7 @@ where
     T: DeserializeOwned,
 {
     fn get_pagination_url(&self, url: &str, page_index: &u64) -> String {
-        format!("{}&index={}", url, page_index)
+        format!("{url}&index={page_index}")
     }
 
     fn page_limit(&self) -> u64 {
@@ -67,15 +67,23 @@ pub struct Track {
 }
 
 pub async fn search_tracks(query: &str) -> Result<APIResult<DeezerPaginationResponse<TrackList>>> {
-    let url = format!("https://api.deezer.com/search/track?q={}", query);
-    request_model::<DeezerPaginationResponse<TrackList>>(&url).await
+    let url = format!("{DEEZER_URL}/search/track?q={query}");
+    request_model::<DeezerPaginationResponse<TrackList>, SerializableNone>(
+        RequestMethod::GET,
+        &url,
+        None,
+        None::<&SerializableNone>,
+    )
+    .await
 }
 
 pub async fn find_track(track_id: &u64) -> Result<APIResult<Track>> {
-    let url = format!("https://api.deezer.com/track/{}", track_id);
-    request_model::<Track>(&url).await
-}
-
-pub async fn album_image(url: &str) -> Result<APIResult<bytes::Bytes>> {
-    request_bytes(&url).await
+    let url = format!("https://api.deezer.com/track/{track_id}");
+    request_model::<Track, SerializableNone>(
+        RequestMethod::GET,
+        &url,
+        None,
+        None::<&SerializableNone>,
+    )
+    .await
 }
