@@ -2,8 +2,6 @@ use super::base::{request, APIResult, Pagination, RequestMethod};
 use crate::Result;
 use serde::{de::DeserializeOwned, Deserialize};
 
-const DEEZER_URL: &str = "https://api.deezer.com";
-
 #[derive(Debug, Deserialize)]
 pub struct DeezerPaginationResponse<T> {
     pub data: T,
@@ -28,14 +26,23 @@ where
     }
 }
 
-pub type TrackList = Vec<SearchTrack>;
+pub type TrackList = Vec<Track>;
 
 #[derive(Debug, Deserialize)]
-pub struct SearchTrack {
+pub struct Track {
     pub id: u64,
+
+    #[serde(rename = "title_short")]
+    pub title: String,
+
+    #[serde(rename = "title")]
+    pub full_title: String,
+
     #[serde(rename = "preview")]
     pub preview_url: String,
-    // More fields exist in the response json
+
+    pub artist: Artist,
+    pub album: Album,
 }
 
 #[derive(Debug, Deserialize)]
@@ -43,35 +50,14 @@ pub struct Album {
     pub title: String,
     #[serde(rename = "cover_big")]
     pub cover_url: String,
-    // More fields exist in the response json
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Artist {
     pub name: String,
-    // More fields exist in the response json
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Track {
-    pub id: u64,
-    pub title: String,
-    pub title_short: String,
-    pub bpm: f32,
-    pub gain: f32,
-    #[serde(rename = "preview")]
-    pub preview_url: String,
-    pub artist: Artist,
-    pub album: Album,
-    // More fields exist in the response json
 }
 
 pub async fn search_tracks(query: &str) -> Result<APIResult<DeezerPaginationResponse<TrackList>>> {
-    let url = format!("{DEEZER_URL}/search/track?q={query}");
+    let url = format!("https://api.deezer.com/search/track?q={query}");
     request::<DeezerPaginationResponse<TrackList>>(RequestMethod::GET, &url, None).await
-}
-
-pub async fn find_track(track_id: &u64) -> Result<APIResult<Track>> {
-    let url = format!("https://api.deezer.com/track/{track_id}");
-    request::<Track>(RequestMethod::GET, &url, None).await
 }
