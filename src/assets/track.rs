@@ -1,5 +1,5 @@
-use super::apis::base::{APIResult, Pagination};
 use super::apis::deezer::{find_track, search_tracks, DeezerPaginationResponse, Track, TrackList};
+use crate::apis::base::{APIResult, Pagination};
 use crate::{Error, Result};
 use log::{debug, error, info};
 use rand::Rng;
