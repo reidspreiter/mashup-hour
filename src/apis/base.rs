@@ -8,6 +8,7 @@ struct SerializableNone;
 pub enum RequestMethod {
     GET,
     POST,
+    DELETE,
 }
 
 impl RequestMethod {
@@ -15,6 +16,7 @@ impl RequestMethod {
         match self {
             RequestMethod::GET => Method::GET,
             RequestMethod::POST => Method::POST,
+            RequestMethod::DELETE => Method::DELETE,
         }
     }
 }
@@ -50,10 +52,12 @@ where
     }
 }
 
+// TODO: investigate making a custom request builder to replicate request and request_with_body, or simply use reqwest's built in builder
+
 pub async fn request<T>(
     method: RequestMethod,
     url: &str,
-    headers: Option<Vec<(&str, &str)>>,
+    headers: Option<&Vec<(String, String)>>,
 ) -> Result<APIResult<T>>
 where
     T: DeserializeOwned,
@@ -61,23 +65,23 @@ where
     request_model::<T, SerializableNone>(method, url, headers, None::<&SerializableNone>).await
 }
 
-pub async fn request_with_json<T, Y>(
+pub async fn request_with_body<T, Y>(
     method: RequestMethod,
     url: &str,
-    headers: Option<Vec<(&str, &str)>>,
-    json_body: Option<&Y>,
+    headers: Option<&Vec<(String, String)>>,
+    json_body: &Y,
 ) -> Result<APIResult<T>>
 where
     T: DeserializeOwned,
     Y: Serialize,
 {
-    request_model::<T, Y>(method, url, headers, json_body).await
+    request_model::<T, Y>(method, url, headers, Some(json_body)).await
 }
 
-async fn _request<T>(
+async fn build_and_send_request<T>(
     method: RequestMethod,
     url: &str,
-    headers: Option<Vec<(&str, &str)>>,
+    headers: Option<&Vec<(String, String)>>,
     json_body: Option<&T>,
 ) -> Result<Response>
 where
@@ -109,16 +113,15 @@ where
 async fn request_model<T, Y>(
     method: RequestMethod,
     url: &str,
-    headers: Option<Vec<(&str, &str)>>,
+    headers: Option<&Vec<(String, String)>>,
     json_body: Option<&Y>,
 ) -> Result<APIResult<T>>
 where
     T: DeserializeOwned,
     Y: Serialize,
 {
-    let res = _request(method, url, headers, json_body).await?;
+    let res = build_and_send_request(method, url, headers, json_body).await?;
     let text = res.text().await?;
-    println!("{text}");
     let model: T = serde_json::from_str(&text)?;
     Ok(APIResult {
         url: url.to_string(),
