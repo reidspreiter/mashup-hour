@@ -27,6 +27,9 @@ pub enum Error {
 
     #[from]
     VarError(std::env::VarError),
+
+    #[from]
+    RedisError(redis::RedisError),
 }
 
 impl Error {
@@ -38,6 +41,12 @@ impl Error {
 impl From<&str> for Error {
     fn from(val: &str) -> Self {
         Self::Custom(val.to_string())
+    }
+}
+
+impl From<Error> for std::io::Error {
+    fn from(e: Error) -> Self {
+        std::io::Error::new(std::io::ErrorKind::Other, e)
     }
 }
 
