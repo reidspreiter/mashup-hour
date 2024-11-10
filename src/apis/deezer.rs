@@ -30,8 +30,6 @@ pub type TrackList = Vec<Track>;
 
 #[derive(Debug, Deserialize)]
 pub struct Track {
-    pub id: u64,
-
     #[serde(rename = "title_short")]
     pub title: String,
 
