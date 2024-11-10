@@ -24,6 +24,9 @@ pub enum Error {
 
     #[from]
     SerdeJSONError(serde_json::Error),
+
+    #[from]
+    VarError(std::env::VarError),
 }
 
 impl Error {
