@@ -5,7 +5,7 @@ use crate::apis::{
 };
 use crate::{Error, Result};
 use log::{debug, error, info};
-use rand::Rng;
+use rand::{random, Rng};
 use random_word::{gen_starts_with, Lang};
 use tokio::time::{sleep, Duration};
 
@@ -134,21 +134,40 @@ pub async fn build_track_asset() -> Result<TrackAsset> {
 }
 
 fn combine_alternating_words(string1: &str, string2: &str) -> String {
-    let words1: Vec<&str> = string1.split_whitespace().collect();
-    let words2: Vec<&str> = string2.split_whitespace().collect();
+    let (words1, words2): (Vec<&str>, Vec<&str>);
+
+    if random::<bool>() {
+        words1 = string1.split_whitespace().collect();
+        words2 = string2.split_whitespace().collect();
+    } else {
+        words1 = string2.split_whitespace().collect();
+        words2 = string1.split_whitespace().collect();
+    }
+
+    let length_limit: u8 = 30;
+    let mut result_length: u8 = 0;
 
     let mut result = Vec::new();
     let len = words1.len().max(words2.len());
 
     for i in 0..len {
         if i < words1.len() {
-            result.push(words1[i]);
+            let word = words1[i];
+            result.push(word);
+            result_length += word.len() as u8;
+            if result_length > length_limit {
+                break;
+            }
         }
         if i < words2.len() {
-            result.push(words2[i]);
+            let word = words2[i];
+            result.push(word);
+            result_length += word.len() as u8;
+            if result_length > length_limit {
+                break;
+            }
         }
     }
-
     result.join(" ")
 }
 
