@@ -63,3 +63,7 @@ pub async fn search_tracks(query: &str) -> Result<APIResult<DeezerPaginationResp
         .request_model::<DeezerPaginationResponse<TrackList>>()
         .await
 }
+
+pub async fn encoded_preview(url: &str) -> Result<String> {
+    request_builder(RequestMethod::GET, url).request_b64().await
+}
