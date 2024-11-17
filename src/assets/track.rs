@@ -119,9 +119,11 @@ pub async fn build_track_asset() -> Result<sb::TrackAsset> {
     let total_tracks = track_search.result.response.total;
     let word = lookup_dictionary_entry(&track_search.word).await;
     let random_track = pick_random_track(&track_search).await?;
+    let preview = d::encoded_preview(&random_track.track.preview_url).await?;
 
     Ok(sb::TrackAsset::from_track(
         random_track.track,
+        preview,
         sb::TrackOrigin {
             word,
             total_tracks,
