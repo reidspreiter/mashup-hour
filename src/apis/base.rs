@@ -1,9 +1,8 @@
 use crate::{Error, Result};
-use reqwest::{Client, Method, Response};
+use base64::{engine::general_purpose, Engine as _};
+use bytes::Bytes;
+use reqwest::{Client, Method, RequestBuilder as ReqwestBuilder, Response};
 use serde::{de::DeserializeOwned, Serialize};
-
-#[derive(Serialize)]
-struct SerializableNone;
 
 pub enum RequestMethod {
     GET,
@@ -17,6 +16,18 @@ impl RequestMethod {
             RequestMethod::GET => Method::GET,
             RequestMethod::POST => Method::POST,
             RequestMethod::DELETE => Method::DELETE,
+        }
+    }
+}
+
+pub enum ContentType {
+    JSON,
+}
+
+impl ContentType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ContentType::JSON => "application/json",
         }
     }
 }
@@ -39,92 +50,99 @@ where
     pub async fn get_page_from_index(&self, entry_index: &u64) -> Result<APIResult<T>> {
         let page_index = entry_index / self.response.page_limit();
         let url = self.response.get_pagination_url(&self.url, &page_index);
-        request_model(RequestMethod::GET, &url, None, None::<&SerializableNone>).await
+        request_builder(RequestMethod::GET, &url)
+            .request_model()
+            .await
     }
 
     pub async fn next_page(&self) -> Result<Option<APIResult<T>>> {
         match self.response.next() {
             Some(url) => Ok(Some(
-                request_model(RequestMethod::GET, &url, None, None::<&SerializableNone>).await?,
+                request_builder(RequestMethod::GET, &url)
+                    .request_model()
+                    .await?,
             )),
             None => Ok(None),
         }
     }
 }
 
-// TODO: investigate making a custom request builder to replicate request and request_with_body, or simply use reqwest's built in builder
-
-pub async fn request<T>(
-    method: RequestMethod,
-    url: &str,
-    headers: Option<&Vec<(String, String)>>,
-) -> Result<APIResult<T>>
-where
-    T: DeserializeOwned,
-{
-    request_model::<T, SerializableNone>(method, url, headers, None::<&SerializableNone>).await
+pub struct RequestBuilder {
+    url: String,
+    request: ReqwestBuilder,
 }
 
-pub async fn request_with_body<T, Y>(
-    method: RequestMethod,
-    url: &str,
-    headers: Option<&Vec<(String, String)>>,
-    json_body: &Y,
-) -> Result<APIResult<T>>
-where
-    T: DeserializeOwned,
-    Y: Serialize,
-{
-    request_model::<T, Y>(method, url, headers, Some(json_body)).await
-}
-
-async fn build_and_send_request<T>(
-    method: RequestMethod,
-    url: &str,
-    headers: Option<&Vec<(String, String)>>,
-    json_body: Option<&T>,
-) -> Result<Response>
-where
-    T: Serialize,
-{
-    let client = Client::new();
-    let mut request = client.request(method.as_reqwest_method(), url);
-
-    if let Some(_headers) = headers {
-        for (key, val) in _headers {
-            request = request.header(key, val);
+impl RequestBuilder {
+    pub fn new(method: RequestMethod, url: &str) -> Self {
+        let client = Client::new();
+        let request = client.request(method.as_reqwest_method(), url);
+        Self {
+            url: url.to_string(),
+            request,
         }
     }
 
-    if let Some(json) = json_body {
-        request = request.json(json);
+    pub fn json<T>(mut self, json: &T) -> Self
+    where
+        T: Serialize,
+    {
+        self.request = self.request.json(json);
+        self
     }
 
-    let res = request.send().await?;
-    if res.status().is_success() {
-        return Ok(res);
+    pub fn header(mut self, key: &str, val: &str) -> Self {
+        self.request = self.request.header(key, val);
+        self
     }
-    Err(Error::ResponseError {
-        status_code: res.status().as_u16(),
-        message: res.text().await?,
-    })
+
+    pub fn content_type(mut self, content_type: ContentType) -> Self {
+        self.request = self.request.header("Content-Type", content_type.as_str());
+        self
+    }
+
+    pub fn bearer(mut self, token: &str) -> Self {
+        self.request = self.request.bearer_auth(token);
+        self
+    }
+
+    pub async fn request(self) -> Result<Response> {
+        let res = self.request.send().await?;
+        if res.status().is_success() {
+            return Ok(res);
+        }
+        Err(Error::ResponseError {
+            status_code: res.status().as_u16(),
+            message: res.text().await?,
+        })
+    }
+
+    pub async fn request_model<T>(self) -> Result<APIResult<T>>
+    where
+        T: DeserializeOwned,
+    {
+        let url = self.url.clone();
+        let res = self.request().await?;
+        let text = res.text().await?;
+        let model: T = serde_json::from_str(&text)?;
+        Ok(APIResult {
+            url,
+            response: model,
+        })
+    }
+
+    pub async fn request_bytes(self) -> Result<Bytes> {
+        let res = self.request().await?;
+        let bytes = res.bytes().await?;
+        Ok(bytes)
+    }
+
+    pub async fn request_b64(self) -> Result<String> {
+        let bytes = self.request_bytes().await?;
+        let b64 = general_purpose::STANDARD.encode(bytes);
+        Ok(b64)
+    }
 }
 
-async fn request_model<T, Y>(
-    method: RequestMethod,
-    url: &str,
-    headers: Option<&Vec<(String, String)>>,
-    json_body: Option<&Y>,
-) -> Result<APIResult<T>>
-where
-    T: DeserializeOwned,
-    Y: Serialize,
-{
-    let res = build_and_send_request(method, url, headers, json_body).await?;
-    let text = res.text().await?;
-    let model: T = serde_json::from_str(&text)?;
-    Ok(APIResult {
-        url: url.to_string(),
-        response: model,
-    })
+pub fn request_builder(method: RequestMethod, url: &str) -> RequestBuilder {
+    RequestBuilder::new(method, url)
 }
