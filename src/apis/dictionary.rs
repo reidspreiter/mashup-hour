@@ -1,4 +1,4 @@
-use super::base::{request, APIResult, RequestMethod};
+use super::base::{request_builder, APIResult, RequestMethod};
 use crate::Result;
 use serde::{Deserialize, Serialize};
 
@@ -38,5 +38,7 @@ pub struct Definition {
 
 pub async fn search_dictionary(word: &str) -> Result<APIResult<Words>> {
     let url = format!("{DICTIONARY_URL}entries/en/{word}");
-    request::<Words>(RequestMethod::GET, &url, None).await
+    request_builder(RequestMethod::GET, &url)
+        .request_model::<Words>()
+        .await
 }

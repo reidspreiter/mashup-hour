@@ -1,4 +1,4 @@
-use super::base::{request, APIResult, Pagination, RequestMethod};
+use super::base::{request_builder, APIResult, Pagination, RequestMethod};
 use crate::Result;
 use serde::{de::DeserializeOwned, Deserialize};
 
@@ -30,6 +30,8 @@ pub type TrackList = Vec<Track>;
 
 #[derive(Debug, Deserialize)]
 pub struct Track {
+    pub id: u64,
+
     #[serde(rename = "title_short")]
     pub title: String,
 
@@ -57,5 +59,7 @@ pub struct Artist {
 
 pub async fn search_tracks(query: &str) -> Result<APIResult<DeezerPaginationResponse<TrackList>>> {
     let url = format!("https://api.deezer.com/search/track?q={query}");
-    request::<DeezerPaginationResponse<TrackList>>(RequestMethod::GET, &url, None).await
+    request_builder(RequestMethod::GET, &url)
+        .request_model::<DeezerPaginationResponse<TrackList>>()
+        .await
 }
