@@ -1,6 +1,7 @@
+use super::models::{MashedTrackAsset, TrackAsset, TrackOrigin};
 use crate::apis::{
     base::{APIResult, Pagination},
-    deezer as d, dictionary as dict, supabase as sb,
+    deezer as d, dictionary as dict,
 };
 use crate::{Error, Result};
 use log::{debug, error, info};
@@ -114,17 +115,17 @@ async fn lookup_dictionary_entry(word: &str) -> dict::Word {
     dict::Word::unknown(word.to_string())
 }
 
-pub async fn build_track_asset() -> Result<sb::TrackAsset> {
+pub async fn build_track_asset() -> Result<TrackAsset> {
     let track_search = random_track_search().await?;
     let total_tracks = track_search.result.response.total;
     let word = lookup_dictionary_entry(&track_search.word).await;
     let random_track = pick_random_track(&track_search).await?;
     let preview = d::encoded_preview(&random_track.track.preview_url).await?;
 
-    Ok(sb::TrackAsset::from_track(
+    Ok(TrackAsset::from_track(
         random_track.track,
         preview,
-        sb::TrackOrigin {
+        TrackOrigin {
             word,
             total_tracks,
             track_index: random_track.index,
@@ -151,11 +152,11 @@ fn combine_alternating_words(string1: &str, string2: &str) -> String {
     result.join(" ")
 }
 
-pub fn mash_track_assets(track1: &sb::TrackAsset, track2: &sb::TrackAsset) -> sb::MashedTrackAsset {
+pub fn mash_track_assets(track1: &TrackAsset, track2: &TrackAsset) -> MashedTrackAsset {
     let title = combine_alternating_words(&track1.title, &track2.title);
     let artist = combine_alternating_words(&track1.artist, &track2.artist);
     let album_title = combine_alternating_words(&track1.album_title, &track2.album_title);
-    sb::MashedTrackAsset {
+    MashedTrackAsset {
         title,
         artist,
         album_title,

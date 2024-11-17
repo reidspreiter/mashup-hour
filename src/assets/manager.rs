@@ -1,6 +1,7 @@
+use super::models::{MashupAssets, MashupAssetsInsert};
 use super::track::{build_track_asset, mash_track_assets};
 use crate::{
-    apis::supabase::{self as sb, MashupAssets},
+    apis::supabase::{self as sb},
     Error, Result,
 };
 use actix_web::web::Data;
@@ -14,42 +15,29 @@ async fn insert_new_asset_row() -> Result<()> {
     let track1 = build_track_asset().await?;
     let track2 = build_track_asset().await?;
     let mashed_track = mash_track_assets(&track1, &track2);
-    let inserted = sb::insert(
-        "mashup_assets",
-        &sb::MashupAssetsInsert {
+    info!("Inserting: {}, {}", &track1.title, &track2.title);
+    sb::SupabaseClient::new()?
+        .from("mashup_assets")
+        .insert(MashupAssetsInsert {
             track1,
             track2,
             mashed_track,
-        },
-    )
-    .await?;
-    info!("Inserted: {:?}", inserted.response);
+        })
+        .request()
+        .await?;
     Ok(())
 }
 
-fn get_delete_criteria(assets: &Vec<sb::MashupAssets>) -> String {
-    let mut criteria = String::from("id=not.in.(");
-
-    for (i, mashup_assets) in assets.iter().enumerate() {
-        if i > 0 {
-            criteria.push(',');
-        }
-        criteria.push_str(&mashup_assets.id.to_string());
-    }
-    criteria.push(')');
-    criteria
-}
-
-async fn select_assets_from_database() -> Result<Vec<sb::MashupAssets>> {
-    let assets = sb::select::<sb::MashupAssets>(
-        "mashup_assets",
-        Some("*"),
-        Some("createdAt.desc"),
-        Some(&(TRACK_LIMIT as u64)),
-    )
-    .await?;
-    info!("Selected: {:?}", assets.response);
-    Ok(assets.response)
+async fn select_assets_from_database() -> Result<Vec<MashupAssets>> {
+    let assets = sb::SupabaseClient::new()?
+        .from("mashup_assets")
+        .select()
+        .order("createdAt", sb::OrderDirection::DESC)
+        .limit(TRACK_LIMIT as u64)
+        .request::<MashupAssets>()
+        .await?;
+    info!("Select {} assets", assets.len());
+    Ok(assets)
 }
 
 fn chunk_string(s: &str, chunk_size: usize) -> Vec<String> {
@@ -66,7 +54,7 @@ fn chunk_string(s: &str, chunk_size: usize) -> Vec<String> {
 }
 
 async fn refresh_assets_cache(
-    assets: &Vec<sb::MashupAssets>,
+    assets: &Vec<MashupAssets>,
     conn: &mut MultiplexedConnection,
 ) -> Result<()> {
     let chunk_size: usize = 786_423;
@@ -93,9 +81,14 @@ pub async fn refresh_assets(client: &Data<Arc<Client>>) -> Result<()> {
     let mut conn = client.get_multiplexed_tokio_connection().await?;
     refresh_assets_cache(&assets, &mut conn).await?;
 
-    let delete_criteria = get_delete_criteria(&assets);
-    let deleted = sb::delete::<sb::MashupAssets>("mashup_assets", Some(&delete_criteria)).await?;
-    info!("Deleted: {:?}", deleted.response);
+    let keep_ids: Vec<String> = assets.iter().map(|item| item.id.to_string()).collect();
+    let deleted = sb::SupabaseClient::new()?
+        .from("mashup_assets")
+        .delete()
+        .notin("id", keep_ids)
+        .request::<MashupAssets>()
+        .await?;
+    info!("Deleted: {} assets", deleted.len());
     Ok(())
 }
 
