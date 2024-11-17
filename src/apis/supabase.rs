@@ -50,9 +50,7 @@ pub struct TrackAsset {
     #[serde(rename = "fullTitle")]
     pub full_title: String,
     pub artist: String,
-
-    #[serde(rename = "previewUrl")]
-    pub preview_url: String,
+    pub preview: String,
 
     #[serde(rename = "albumTitle")]
     pub album_title: String,
@@ -63,13 +61,13 @@ pub struct TrackAsset {
 }
 
 impl TrackAsset {
-    pub fn from_track(track: Track, origin: TrackOrigin) -> Self {
+    pub fn from_track(track: Track, preview: String, origin: TrackOrigin) -> Self {
         Self {
             id: track.id,
             title: track.title,
             full_title: track.full_title,
             artist: track.artist.name,
-            preview_url: track.preview_url,
+            preview,
             album_title: track.album.title,
             cover_url: track.album.cover_url,
             origin,
