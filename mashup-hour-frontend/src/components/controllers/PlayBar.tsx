@@ -24,6 +24,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
     const [startPercentage, setStartPercentage] = useState<number>(0);
     const [endPercentage, setEndPercentage] = useState<number>(1);
     const [dragging, setDragging] = useState<PlayBarDraggable | null>(null);
+    const [isRightClick, setIsRightClick] = useState<boolean>(false);
     const sliderRef = useRef<HTMLDivElement | null>(null);
 
     // track the players position, WIP I guess this might take a miracle to do accurately
@@ -35,11 +36,17 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
     const stopDrag = () => {
         setDragging(null);
         document.body.classList.remove("sliding");
+        document.body.classList.remove("pointing");
     }
 
-    const startDrag = (draggable: PlayBarDraggable) => {
+    const startDrag = (e: React.MouseEvent, draggable: PlayBarDraggable) => {
         setDragging(draggable);
-        document.body.classList.add("sliding");
+        setIsRightClick(e.button === 2);
+        if (draggable !== PlayBarDraggable.SEEK) {
+            document.body.classList.add("sliding");
+        } else {
+            document.body.classList.add("pointing");
+        }
     }
 
     const onMouseEnter = () => {
@@ -60,6 +67,15 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
 
                 if (dragging === PlayBarDraggable.SEEK) {
                     setSeekPercentage(newPercentage);
+                } else if (isRightClick) {
+                    const d = (dragging === PlayBarDraggable.END ? endPercentage : startPercentage) - newPercentage;
+                    const newEndPercentage = endPercentage - d;
+                    const newStartPercentage = startPercentage - d;
+                    if (newEndPercentage >= 0 && newEndPercentage <= 1 && newStartPercentage >= 0 && newStartPercentage <= 1) {
+                        setEndPercentage(newEndPercentage);
+                        setStartPercentage(newStartPercentage);
+                        player.setBounds(newStartPercentage * totalDuration, newEndPercentage * totalDuration);
+                    }
                 } else if (dragging === PlayBarDraggable.END && newPercentage > startPercentage) {
                     player.setEnd(newPercentage * totalDuration);
                     setEndPercentage(newPercentage);
@@ -69,7 +85,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                 }
             }
         }
-    }, [dragging, totalDuration, endPercentage, startPercentage, player]);
+    }, [dragging, totalDuration, endPercentage, startPercentage, player, isRightClick]);
 
     useEffect(() => {
         if (dragging !== null) {
@@ -95,6 +111,10 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
             className="playbar"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
+            onContextMenu={(e) => e.preventDefault()}
+            style={{
+                backgroundImage: `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, transparent ${startPercentage * 100}%, transparent ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`,
+            }}
         >
             {(isHovering || dragging !== null) && (
                 <Tooltip text="seek" showCondition={dragging === null} style={{
@@ -107,14 +127,14 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                             height: `${posWidth}px`,
                             transform: `${dragging === PlayBarDraggable.SEEK ? "scale(var(--scale-increase))" : ""}`
                         }}
-                        onMouseDown={() => setDragging(PlayBarDraggable.SEEK)}
+                        onMouseDown={(e) => startDrag(e, PlayBarDraggable.SEEK)}
                     ></div>
                 </Tooltip>
             )
             }
             <Tooltip text="start" showCondition={dragging === null} style={{
                 left: `${startPercentage * 100}%`,
-                top: "4px",
+                top: "6px",
                 position: "absolute",
             }}>
                 <div
@@ -125,12 +145,12 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                         height: `${posWidth / 2}px`,
                         transform: `${dragging === PlayBarDraggable.START ? "scale(var(--scale-increase))" : ""}`
                     }}
-                    onMouseDown={() => startDrag(PlayBarDraggable.START)}
+                    onMouseDown={(e) => startDrag(e, PlayBarDraggable.START)}
                 ></div>
             </Tooltip>
             <Tooltip text="end" showCondition={dragging === null} style={{
                 left: `${endPercentage * 100}%`,
-                top: "-4px",
+                top: "-6px",
                 position: "absolute",
             }}>
                 <div
@@ -141,7 +161,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                         height: `${posWidth / 2}px`,
                         transform: `${dragging === PlayBarDraggable.END ? "scale(var(--scale-increase))" : ""}`
                     }}
-                    onMouseDown={() => startDrag(PlayBarDraggable.END)}
+                    onMouseDown={(e) => startDrag(e, PlayBarDraggable.END)}
                 ></div>
             </Tooltip>
 
