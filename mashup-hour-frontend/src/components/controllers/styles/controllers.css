@@ -81,12 +81,10 @@ KNOB
 TOOLTIP 
 */
 .tooltip-container {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 100%;
-  pointer-events: none;
 }
 
 .tooltip {
@@ -159,7 +157,6 @@ PLAYBAR
 
 .playbar-pos {
   position: absolute;
-  top: calc(-50% - 3px);
   border-radius: 50%;
   cursor: pointer;
   background-color: var(--white);
@@ -173,7 +170,7 @@ PLAYBAR
   transition: transform var(--transition-speed) ease;
 }
 
-.playpos:hover,
+.playbar-pos:hover,
 .playbar-bound:hover {
   transform: scale(var(--scale-increase));
 }
