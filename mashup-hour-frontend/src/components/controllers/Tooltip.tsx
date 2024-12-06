@@ -4,9 +4,11 @@ import "./styles/controllers.css"
 interface TooltipProps {
     children: ReactNode,
     text: string,
+    showCondition?: boolean,
+    style?: React.CSSProperties
 }
 
-const Tooltip: React.FC<TooltipProps> = ({ text, children }) => {
+const Tooltip: React.FC<TooltipProps> = ({ text, children, showCondition = true, style }) => {
     const [showTooltip, setShowTooltip] = useState(false);
     const timeoutRef = useRef<number | null>(null);
 
@@ -24,9 +26,9 @@ const Tooltip: React.FC<TooltipProps> = ({ text, children }) => {
     }
 
     return (
-        <div className="tooltip-container" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onMouseLeave}>
+        <div className="tooltip-container" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onMouseLeave} style={style}>
             {children}
-            {showTooltip && <div className="tooltip">{text}</div>}
+            {showTooltip && showCondition && <div className="tooltip">{text}</div>}
         </div>
     )
 }
