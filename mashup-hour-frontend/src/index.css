@@ -52,6 +52,10 @@ body.sliding * {
   background-color: var(--pink) !important;
 }
 
+.enabled-on-hold:active {
+  background-color: var(--pink) !important;
+}
+
 .ignore-pointer {
   pointer-events: none;
 }
