@@ -1,34 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { createContext, useState, useEffect } from 'react';
+import { MashupAssetsSchema, MashupAssets } from "./schemas/mashup-hour";
+import Mashup from './components/mashup/Mashup';
+import { Track, TrackSide } from "./components/track";
+import { data } from './sampleData';
+import "./app.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [assets, setAssets] = useState<MashupAssets[]>(data);
+  const [trackIndex, setTrackIndex] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true); // New state to track loading
+  const trackLimit = 3;
+
+  const retrieveAssets = async () => {
+    try {
+      // const response = await fetch('http://127.0.0.1:8080/retrieve-assets');
+      // const data = await response.json();
+      // console.log(data);
+      // const _assets = MashupAssetsSchema.array().parse(data);
+      // setAssets(_assets);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data", error);
+    }
+  };
+
+  useEffect(() => {
+    retrieveAssets();
+  }, [])
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="app-container">
+      <Track assets={assets} trackIndex={trackIndex} trackSide={TrackSide.LEFT} />
+      <Mashup assets={assets} trackIndex={trackIndex} trackLimit={trackLimit} setTrackIndex={setTrackIndex} />
+      <Track assets={assets} trackIndex={trackIndex} trackSide={TrackSide.RIGHT} />
+    </div>
   )
 }
 

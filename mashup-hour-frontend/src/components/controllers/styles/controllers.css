@@ -1,0 +1,179 @@
+.controller {
+  height: 100%;
+  background: transparent;
+  border: none;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.controller-icon {
+  height: 80%;
+  width: 80%;
+  cursor: pointer;
+  transition: color var(--transition-speed) ease;
+  color: var(--par-color);
+}
+
+.controller-icon:hover {
+  color: var(--white);
+}
+
+/*
+CIRCLE
+*/
+.circle-button {
+  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  padding: 0px;
+  background-color: var(--par-color);
+}
+
+.circle-button:hover {
+  background-color: var(--white);
+}
+
+/*
+PLAY-BUTTON
+*/
+.play-button-icon {
+  height: 100%;
+  width: 100%;
+  color: var(--white);
+  transition: transform var(--transition-speed) ease;
+}
+
+.play-button-icon:hover {
+  transform: scale(var(--scale-increase));
+}
+
+/*
+KNOB
+*/
+.knob {
+  width: 90%;
+  height: 90%;
+  cursor: grab;
+  transition: transform var(--transition-speed) ease;
+}
+
+.knob:hover {
+  transform: scale(var(--scale-increase));
+}
+
+.knob:hover circle {
+  fill: var(--white);
+}
+
+.knob-icon {
+  width: 35%;
+  height: 35%;
+  color: var(--bg-color);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/*
+TOOLTIP 
+*/
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--bg-color);
+  color: var(--white);
+  border-radius: 4px;
+  padding: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  pointer-events: none;
+  margin: 0px;
+}
+
+.tooltip-container:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0.8s;
+}
+
+/*
+CASING
+*/
+.casing {
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4px 0px;
+  border: 2px solid var(--bg-color);
+  border-radius: 10px;
+}
+
+.invisible-casing {
+  border-color: transparent;
+}
+
+.subcasing {
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.subcasing>* {
+  margin: 0px 2px;
+}
+
+/*
+PLAYBAR
+*/
+.playbar {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  border: 2px solid var(--bg-color);
+  border-radius: 4px;
+  margin: 10px 0px;
+  cursor: pointer;
+}
+
+.playbar-pos {
+  position: absolute;
+  top: calc(-50% - 3px);
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: var(--white);
+  transition: transform var(--transition-speed) ease;
+}
+
+.playbar-bound {
+  position: absolute;
+  border-radius: 2px;
+  cursor: ew-resize;
+  transition: transform var(--transition-speed) ease;
+}
+
+.playpos:hover,
+.playbar-bound:hover {
+  transform: scale(var(--scale-increase));
+}
