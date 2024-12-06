@@ -41,7 +41,13 @@ body.dragging * {
 }
 
 body.sliding * {
+  user-select: none;
   cursor: ew-resize !important;
+}
+
+body.pointing * {
+  user-select: none;
+  cursor: pointer !important;
 }
 
 .enabled {
