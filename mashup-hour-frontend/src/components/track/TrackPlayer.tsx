@@ -1,4 +1,4 @@
-import { Switch, Knob, PlayButton, SimpleSwitch, Casing, PressAndHold, PlayBar, EmptyCasing } from "../controllers"
+import { Switch, Knob, PlayButton, SimpleSwitch, Casing, PressAndHold, PlayBar, SimpleButton } from "../controllers"
 import { IoRepeatSharp, IoArrowBackSharp, IoVolumeMedium, IoSpeedometer } from "react-icons/io5"
 import { Player } from "../player"
 
@@ -16,8 +16,8 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({ player, isPlaying, setIsPlayi
             <div className="main-column-section">
                 <Casing sub1={<SimpleSwitch name="preserve pitch" onClick={player.togglePitchConsistentPlayback} />}><Knob name="speed" min={0.1} max={3} mid={1} onChange={player.adjustPlaybackSpeed} icon={IoSpeedometer} /></Casing>
                 <Casing sub2={<SimpleSwitch name="lock playbar bounds" onClick={() => { }} />}><Switch name="reverse" icon={IoArrowBackSharp} onClick={player.toggleReverse} /></Casing>
-                <EmptyCasing><PlayButton onClick={player.togglePlayer} isPlaying={isPlaying} setIsPlaying={setIsPlaying} /></EmptyCasing>
-                <EmptyCasing><Switch name="loop" icon={IoRepeatSharp} onClick={player.toggleLoop} /></EmptyCasing>
+                <Casing sub1={<SimpleButton name="restart" onClick={() => { }} />} sub2={<SimpleSwitch name="restart on pause" onClick={() => { }} />}><PlayButton onClick={player.togglePlayer} isPlaying={isPlaying} setIsPlaying={setIsPlaying} /></Casing>
+                <Casing sub1={<SimpleButton name="randomize playbar bounds" onClick={() => { }} />}><Switch name="loop" icon={IoRepeatSharp} onClick={player.toggleLoop} /></Casing>
                 <Casing sub1={<SimpleSwitch name="mute" onClick={player.toggleMute} enabledName="unmute" />} sub2={<PressAndHold name="mute on hold" onClick={player.toggleMute} />}><Knob name="volume" min={-40} mid={-4} max={20} onChange={player.adjustVolume} icon={IoVolumeMedium} /></Casing>
 
             </div>
