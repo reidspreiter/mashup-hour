@@ -94,4 +94,8 @@ export class Player {
     public setEnd = (end: number) => {
         this.player.loopEnd = end;
     }
+
+    public setBounds = (start: number, end: number) => {
+        this.player.setLoopPoints(start, end);
+    }
 }
