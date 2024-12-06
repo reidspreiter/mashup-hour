@@ -1,11 +1,11 @@
 import { ReactNode } from "react"
 import "./styles/controllers.css"
 
-interface InvisibleCasingProps {
+interface EmptyCasing {
     children: ReactNode
 }
 
-const InvisibleCasing: React.FC<InvisibleCasingProps> = ({ children }) => {
+const EmptyCasing: React.FC<EmptyCasing> = ({ children }) => {
     return (
         <div className="casing invisible-casing">
             <div className="subcasing">
@@ -15,4 +15,4 @@ const InvisibleCasing: React.FC<InvisibleCasingProps> = ({ children }) => {
         </div>
     )
 }
-export default InvisibleCasing
+export default EmptyCasing

@@ -7,7 +7,7 @@ import SimpleSwitch from "./SimpleSwitch";
 import Casing from "./Casing";
 import PressAndHold from "./PressAndHold";
 import PlayBar from "./PlayBar";
-import InvisibleCasing from "./InvisibleCasing";
+import EmptyCasing from "./EmptyCasing";
 
-export { Switch, SimpleSwitch, Knob, PlayButton, Tooltip, Button, Casing, PressAndHold, PlayBar, InvisibleCasing };
+export { Switch, SimpleSwitch, Knob, PlayButton, Tooltip, Button, Casing, PressAndHold, PlayBar, EmptyCasing };
 export * from "./types";
