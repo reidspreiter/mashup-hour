@@ -17,7 +17,7 @@ const Track: React.FC<TrackProps> = ({ assets, trackIndex, trackSide }) => {
     }, [assets, trackSide]);
 
     const player = useMemo(() => {
-        return new Player(trackAssets[trackIndex].preview, setIsPlaying);
+        return new Player(trackAssets[trackIndex].title, trackAssets[trackIndex].preview, setIsPlaying);
     }, [trackAssets, trackIndex]);
 
     useEffect(() => {
