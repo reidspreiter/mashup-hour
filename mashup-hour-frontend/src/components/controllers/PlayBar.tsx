@@ -18,7 +18,6 @@ const posWidth = 16;
 const boundWidth = 10;
 
 const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
-    const totalDuration = player.totalDuration();
     const [isHovering, setIsHovering] = useState<boolean>(false);
     const [seekPercentage, setSeekPercentage] = useState<number>(0);
     const [startPercentage, setStartPercentage] = useState<number>(0);
@@ -27,11 +26,24 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
     const [isRightClick, setIsRightClick] = useState<boolean>(false);
     const sliderRef = useRef<HTMLDivElement | null>(null);
 
-    // track the players position, WIP I guess this might take a miracle to do accurately
-    // useEffect(() => {
-    //     const updatePlayPos = () => {
-    //     }
-    // })
+    //track the players position, WIP I guess this might take a miracle to do accurately
+    useEffect(() => {
+        console.log("useeffect called")
+        const intervalId = setInterval(() => {
+            setSeekPercentage(player.position / player.duration);
+            console.log(player.position)
+        }, 1000);
+        return () => clearInterval(intervalId);
+    }, [player, setSeekPercentage])
+
+    const getLinearGradientString = useCallback((): string => {
+        if (player.reverse) {
+            return `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, #9a9a9a ${startPercentage * 100}%, #9a9a9a ${seekPercentage * 100}%, transparent ${seekPercentage * 100}%, transparent ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`;
+        } else {
+            return `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, #9a9a9a ${startPercentage * 100}%, #9a9a9a ${seekPercentage * 100}%, transparent ${seekPercentage * 100}%, transparent ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`;
+        }
+
+    }, [player, startPercentage, seekPercentage, endPercentage]);
 
     const stopDrag = () => {
         setDragging(null);
@@ -64,6 +76,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                 const sliderWidth = rect.width;
                 const mousePos = clamp(0, sliderWidth, e.clientX - rect.left);
                 const newPercentage = mousePos / sliderWidth
+                const duration = player.duration;
 
                 if (dragging === PlayBarDraggable.SEEK) {
                     setSeekPercentage(newPercentage);
@@ -74,18 +87,18 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                     if (newEndPercentage >= 0 && newEndPercentage <= 1 && newStartPercentage >= 0 && newStartPercentage <= 1) {
                         setEndPercentage(newEndPercentage);
                         setStartPercentage(newStartPercentage);
-                        player.setBounds(newStartPercentage * totalDuration, newEndPercentage * totalDuration);
+                        player.setBounds(newStartPercentage * duration, newEndPercentage * duration);
                     }
                 } else if (dragging === PlayBarDraggable.END && newPercentage > startPercentage) {
-                    player.setEnd(newPercentage * totalDuration);
+                    player.endBound = newPercentage * duration;
                     setEndPercentage(newPercentage);
                 } else if (dragging === PlayBarDraggable.START && newPercentage < endPercentage) {
-                    player.setStart(newPercentage * totalDuration);
+                    player.startBound = newPercentage * duration;
                     setStartPercentage(newPercentage);
                 }
             }
         }
-    }, [dragging, totalDuration, endPercentage, startPercentage, player, isRightClick]);
+    }, [dragging, endPercentage, startPercentage, player, isRightClick]);
 
     useEffect(() => {
         if (dragging !== null) {
@@ -113,7 +126,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
             onMouseLeave={onMouseLeave}
             onContextMenu={(e) => e.preventDefault()}
             style={{
-                backgroundImage: `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, transparent ${startPercentage * 100}%, transparent ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`,
+                backgroundImage: getLinearGradientString(),
             }}
         >
             {(isHovering || dragging !== null) && (
