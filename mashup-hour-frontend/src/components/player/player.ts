@@ -1,6 +1,8 @@
 import * as Tone from "tone"
 
-//keep track of last elapsed time before the playback rate change until loop restarts
+// TODO: Create own player instead of relying on a wrapper of Tone's
+// It should be straightforward to use with Tone features
+// A lot of the position workarounds would not have to occur if a custom player was created
 
 export class Player {
     readonly name: string;
@@ -17,6 +19,8 @@ export class Player {
 
     private _position: number = 0;
     private timeReference: number = 0;
+    private _onPositionUpdate?: (position: number) => void;
+    private positionUpdateIntervalId?: number;
 
     public restartOnPause: boolean = false;
 
@@ -56,11 +60,24 @@ export class Player {
             } else {
                 this._position = this._position === 0 && this.reverse ? this._endBound * 1000 : this._position;
             }
+
             this.player.start(undefined, this.reverse ? this.duration - this._position / 1000 : this._position / 1000);
+
             this.timeReference = performance.now();
+            if (this.positionUpdateIntervalId === undefined) {
+                this.positionUpdateIntervalId = setInterval(() => {
+                    this.refreshPosition();
+                }, 500);
+            }
         } else {
+            clearInterval(this.positionUpdateIntervalId)
+            this.positionUpdateIntervalId = undefined;
             this.player.stop();
         }
+    }
+
+    set onPositionUpdate(onPositionUpdate: (position: number) => void) {
+        this._onPositionUpdate = onPositionUpdate;
     }
 
     set loop(loop: boolean) {
@@ -73,6 +90,7 @@ export class Player {
 
     set reverse(reverse: boolean) {
         this.player.reverse = reverse;
+        this.refreshPosition();
     }
 
     set playbackRate(rate: number) {
@@ -113,34 +131,45 @@ export class Player {
     set startBound(start: number) {
         this.player.loopStart = start;
         this._startBound = start;
+        this.refreshPosition();
     }
 
     set endBound(end: number) {
         this.player.loopEnd = end;
         this._endBound = end;
+        this.refreshPosition();
     }
 
     public setBounds = (start: number, end: number) => {
         this.player.setLoopPoints(start, end);
         this._startBound = start;
         this._endBound = end;
+        this.refreshPosition();
     }
 
     private refreshPosition(forceRefresh: boolean = false) {
         if (this.isStarted || forceRefresh) {
             const now = performance.now();
-            const op = this.reverse ? -1 : 1
-            this._position = (this._position + (now - this.timeReference) * this.player.playbackRate * op) % (this.duration * 1000);
-            // TODO: call the position callback when loops
+            if (this.reverse) {
+                this._position -= (now - this.timeReference) * this.player.playbackRate;
+                if (this._position <= this._startBound * 1000) {
+                    this._position = (this._endBound * 1000) - ((this._startBound * 1000) - this._position);
+                }
+            } else {
+                this._position += (now - this.timeReference) * this.player.playbackRate;
+                if (this._position >= this._endBound * 1000) {
+                    this._position = (this._startBound * 1000) + (this._position - (this._endBound * 1000));
+                }
+            }
             this.timeReference = now;
         } else if (!this.isStarted && this.restartOnPause) {
-            this._position = this.reverse ? this._endBound : this._startBound;
+            this._position = (this.reverse ? this._endBound : this._startBound) * 1000;
         }
+        console.log(this._position / 1000);
+        this._onPositionUpdate?.(this._position / 1000);
     }
 
     get position(): number {
-        // TODO: assign this to a callback for better control
-        this.refreshPosition()
         return this._position / 1000;
     }
 }

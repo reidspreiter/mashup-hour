@@ -26,19 +26,14 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
     const [isRightClick, setIsRightClick] = useState<boolean>(false);
     const sliderRef = useRef<HTMLDivElement | null>(null);
 
-    //track the players position, WIP I guess this might take a miracle to do accurately
-    useEffect(() => {
-        console.log("useeffect called")
-        const intervalId = setInterval(() => {
-            setSeekPercentage(player.position / player.duration);
-            console.log(player.position)
-        }, 1000);
-        return () => clearInterval(intervalId);
-    }, [player, setSeekPercentage])
+    player.onPositionUpdate = (position: number) => {
+        console.log("position update called");
+        setSeekPercentage(position / player.duration);
+    }
 
     const getLinearGradientString = useCallback((): string => {
         if (player.reverse) {
-            return `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, #9a9a9a ${startPercentage * 100}%, #9a9a9a ${seekPercentage * 100}%, transparent ${seekPercentage * 100}%, transparent ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`;
+            return `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, transparent ${startPercentage * 100}%, transparent ${seekPercentage * 100}%, #9a9a9a ${seekPercentage * 100}%, #9a9a9a ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`;
         } else {
             return `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, #9a9a9a ${startPercentage * 100}%, #9a9a9a ${seekPercentage * 100}%, transparent ${seekPercentage * 100}%, transparent ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`;
         }
@@ -145,7 +140,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                 </Tooltip>
             )
             }
-            <Tooltip text="start" showCondition={dragging === null} style={{
+            <Tooltip text={player.reverse ? "end" : "start"} showCondition={dragging === null} style={{
                 left: `${startPercentage * 100}%`,
                 top: "6px",
                 position: "absolute",
@@ -153,7 +148,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                 <div
                     className="playbar-bound"
                     style={{
-                        backgroundColor: 'green',
+                        backgroundColor: `${player.reverse ? "red" : "green"}`,
                         width: `${boundWidth}px`,
                         height: `${posWidth / 2}px`,
                         transform: `${dragging === PlayBarDraggable.START ? "scale(var(--scale-increase))" : ""}`
@@ -161,7 +156,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                     onMouseDown={(e) => startDrag(e, PlayBarDraggable.START)}
                 ></div>
             </Tooltip>
-            <Tooltip text="end" showCondition={dragging === null} style={{
+            <Tooltip text={player.reverse ? "start" : "end"} showCondition={dragging === null} style={{
                 left: `${endPercentage * 100}%`,
                 top: "-6px",
                 position: "absolute",
@@ -169,7 +164,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                 <div
                     className="playbar-bound"
                     style={{
-                        backgroundColor: 'red',
+                        backgroundColor: `${player.reverse ? "green" : "red"}`,
                         width: `${boundWidth}px`,
                         height: `${posWidth / 2}px`,
                         transform: `${dragging === PlayBarDraggable.END ? "scale(var(--scale-increase))" : ""}`
