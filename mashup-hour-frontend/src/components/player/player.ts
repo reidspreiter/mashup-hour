@@ -21,6 +21,7 @@ export class Player {
     private timeReference: number = 0;
     private _onPositionUpdate?: (position: number) => void;
     private positionUpdateIntervalId?: number;
+    private isSeeking: boolean = false;
 
     public restartOnPause: boolean = false;
 
@@ -43,8 +44,12 @@ export class Player {
 
         this.player = new Tone.Player(this.previewUrl).connect(this.playbackSpeedPitcher);
         this.player.onstop = () => {
-            setIsPlaying(false);
-            this.refreshPosition(true);
+            if (this.isSeeking) {
+                this.isSeeking = false;
+            } else {
+                setIsPlaying(false);
+                this.refreshPosition(true);
+            }
         }
 
         this.player.buffer.onload = () => {
@@ -74,6 +79,20 @@ export class Player {
             this.positionUpdateIntervalId = undefined;
             this.player.stop();
         }
+    }
+
+    private seek(position: number) {
+        // Tone.Player calls the onStop function when seeking
+        // this.isSeeking is reset within the onStop callback to ensure it is called before isSeeking is reset
+        this.isSeeking = true;
+        this.player.seek(this.reverse ? this.duration - position : position);
+        this.timeReference = performance.now();
+        this._position = position * 1000
+        this._onPositionUpdate?.(position);
+    }
+
+    public restart = () => {
+        this.seek(this.reverse ? this._endBound : this._startBound);
     }
 
     set onPositionUpdate(onPositionUpdate: (position: number) => void) {
@@ -165,7 +184,6 @@ export class Player {
         } else if (!this.isStarted && this.restartOnPause) {
             this._position = (this.reverse ? this._endBound : this._startBound) * 1000;
         }
-        console.log(this._position / 1000);
         this._onPositionUpdate?.(this._position / 1000);
     }
 
