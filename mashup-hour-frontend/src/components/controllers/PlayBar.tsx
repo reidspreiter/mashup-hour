@@ -27,7 +27,6 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
     const sliderRef = useRef<HTMLDivElement | null>(null);
 
     player.onPositionUpdate = (position: number) => {
-        console.log("position update called");
         setSeekPercentage(position / player.duration);
     }
 

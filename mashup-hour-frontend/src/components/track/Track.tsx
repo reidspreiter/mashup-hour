@@ -24,7 +24,6 @@ const Track: React.FC<TrackProps> = ({ assets, trackIndex, trackSide }) => {
         return () => {
             player.togglePlayer(false);
             setIsPlaying(false);
-            console.log("cleaning");
         }
     }, [player]);
 

@@ -16,7 +16,6 @@ function App() {
     try {
       // const response = await fetch('http://127.0.0.1:8080/retrieve-assets');
       // const data = await response.json();
-      // console.log(data);
       // const _assets = MashupAssetsSchema.array().parse(data);
       // setAssets(_assets);
       setLoading(false);
