@@ -4,6 +4,8 @@ import * as Tone from "tone"
 // It should be straightforward to use with Tone features
 // A lot of the position workarounds would not have to occur if a custom player was created
 
+type PositionCallback = (percent: number) => void;
+
 export class Player {
     readonly name: string;
 
@@ -19,9 +21,12 @@ export class Player {
 
     private _position: number = 0;
     private timeReference: number = 0;
-    private _onPositionUpdate?: (position: number) => void;
     private positionUpdateIntervalId?: number;
     private isSeeking: boolean = false;
+
+    private _onPositionUpdate?: PositionCallback;
+    private _onEndBoundUpdate?: PositionCallback;
+    private _onStartBoundUpdate?: PositionCallback;
 
     public restartOnPause: boolean = false;
 
@@ -95,8 +100,30 @@ export class Player {
         this.seek(this.reverse ? this._endBound : this._startBound);
     }
 
-    set onPositionUpdate(onPositionUpdate: (position: number) => void) {
+    public randomizeBounds = () => {
+        const durationPercent = Math.random();
+        const startPercent = Math.random() * (1 - durationPercent)
+        const endPercent = startPercent + durationPercent;
+        this.setBounds(startPercent, endPercent);
+    }
+
+    public randomizeBoundPosition = () => {
+        const durationPercent = (this._endBound - this._startBound) / this.duration;
+        const startPercent = Math.random() * (1 - durationPercent)
+        const endPercent = startPercent + durationPercent;
+        this.setBounds(startPercent, endPercent);
+    }
+
+    set onPositionUpdate(onPositionUpdate: PositionCallback) {
         this._onPositionUpdate = onPositionUpdate;
+    }
+
+    set onEndBoundUpdate(onEndBoundUpdate: PositionCallback) {
+        this._onEndBoundUpdate = onEndBoundUpdate;
+    }
+
+    set onStartBoundUpdate(onStartBoundUpdate: PositionCallback) {
+        this._onStartBoundUpdate = onStartBoundUpdate;
     }
 
     set loop(loop: boolean) {
@@ -147,22 +174,27 @@ export class Player {
         return this.player.buffer.duration;
     }
 
-    set startBound(start: number) {
-        this.player.loopStart = start;
-        this._startBound = start;
+    set startBound(percent: number) {
+        this.player.loopStart = percent * this.duration;
+        this._startBound = percent * this.duration;
+        this._onStartBoundUpdate?.(percent);
         this.refreshPosition();
     }
 
-    set endBound(end: number) {
-        this.player.loopEnd = end;
-        this._endBound = end;
+    set endBound(percent: number) {
+        this.player.loopEnd = percent * this.duration;
+        this._endBound = percent * this.duration;
+        this._onEndBoundUpdate?.(percent);
         this.refreshPosition();
     }
 
-    public setBounds = (start: number, end: number) => {
-        this.player.setLoopPoints(start, end);
-        this._startBound = start;
-        this._endBound = end;
+    public setBounds = (startPercent: number, endPercent: number) => {
+        const duration = this.duration;
+        this.player.setLoopPoints(startPercent * duration, endPercent * duration);
+        this._startBound = startPercent * duration;
+        this._endBound = endPercent * duration;
+        this._onStartBoundUpdate?.(startPercent);
+        this._onEndBoundUpdate?.(endPercent);
         this.refreshPosition();
     }
 
@@ -184,7 +216,7 @@ export class Player {
         } else if (!this.isStarted && this.restartOnPause) {
             this._position = (this.reverse ? this._endBound : this._startBound) * 1000;
         }
-        this._onPositionUpdate?.(this._position / 1000);
+        this._onPositionUpdate?.((this._position / 1000) / this.duration);
     }
 
     get position(): number {

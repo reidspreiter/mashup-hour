@@ -26,9 +26,9 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
     const [isRightClick, setIsRightClick] = useState<boolean>(false);
     const sliderRef = useRef<HTMLDivElement | null>(null);
 
-    player.onPositionUpdate = (position: number) => {
-        setSeekPercentage(position / player.duration);
-    }
+    player.onPositionUpdate = (percent: number) => setSeekPercentage(percent);
+    player.onEndBoundUpdate = (percent: number) => setEndPercentage(percent);
+    player.onStartBoundUpdate = (percent: number) => setStartPercentage(percent);
 
     const getLinearGradientString = useCallback((): string => {
         if (player.reverse) {
@@ -69,8 +69,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
             if (rect !== undefined) {
                 const sliderWidth = rect.width;
                 const mousePos = clamp(0, sliderWidth, e.clientX - rect.left);
-                const newPercentage = mousePos / sliderWidth
-                const duration = player.duration;
+                const newPercentage = mousePos / sliderWidth;
 
                 if (dragging === PlayBarDraggable.SEEK) {
                     setSeekPercentage(newPercentage);
@@ -79,16 +78,12 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
                     const newEndPercentage = endPercentage - d;
                     const newStartPercentage = startPercentage - d;
                     if (newEndPercentage >= 0 && newEndPercentage <= 1 && newStartPercentage >= 0 && newStartPercentage <= 1) {
-                        setEndPercentage(newEndPercentage);
-                        setStartPercentage(newStartPercentage);
-                        player.setBounds(newStartPercentage * duration, newEndPercentage * duration);
+                        player.setBounds(newStartPercentage, newEndPercentage);
                     }
                 } else if (dragging === PlayBarDraggable.END && newPercentage > startPercentage) {
-                    player.endBound = newPercentage * duration;
-                    setEndPercentage(newPercentage);
+                    player.endBound = newPercentage;
                 } else if (dragging === PlayBarDraggable.START && newPercentage < endPercentage) {
-                    player.startBound = newPercentage * duration;
-                    setStartPercentage(newPercentage);
+                    player.startBound = newPercentage;
                 }
             }
         }
