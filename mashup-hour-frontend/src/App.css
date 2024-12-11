@@ -11,9 +11,11 @@
   margin: 10px;
   box-sizing: border-box;
   border-radius: 10px;
-  justify-content: space-between;
-  padding: 10px;
+  justify-content: space-evenly;
+  padding: 4px;
   border: solid 1px var(--bg-color-light);
+  flex-direction: column;
+  display: flex;
 }
 
 @media (max-width: 768px) {
@@ -29,6 +31,7 @@
 .main-column-section {
   display: flex;
   justify-content: center;
+  flex-grow: 0;
 }
 
 .main-column-section>* {

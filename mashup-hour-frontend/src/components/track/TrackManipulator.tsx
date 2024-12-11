@@ -1,6 +1,6 @@
 const TrackManipulator = () => {
     return (
-        <section>TrackManipulator</section>
+        <section style={{ flexGrow: 1 }}>TrackManipulator</section>
     )
 }
 export default TrackManipulator

@@ -1,5 +1,5 @@
 import { MashupAssets } from "../../schemas/mashup-hour"
-import { TrackInfo, TrackManipulator, TrackSampler, TrackPlayer, TrackSide } from ".";
+import { TrackInfo, TrackManipulator, TrackPlayer, TrackSide } from ".";
 import { useState, useEffect, useMemo } from "react"
 import { Player } from "../player"
 
@@ -28,9 +28,8 @@ const Track: React.FC<TrackProps> = ({ assets, trackIndex, trackSide }) => {
     }, [player]);
 
     return (
-        <div className="main-column">
+        <div className="main-column" onContextMenu={(e) => e.preventDefault()}>
             <TrackInfo trackAssets={trackAssets} trackIndex={trackIndex} />
-            <TrackSampler />
             <TrackManipulator />
             <TrackPlayer player={player} isPlaying={isPlaying} setIsPlaying={setIsPlaying} />
         </div>

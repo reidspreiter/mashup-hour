@@ -1,6 +1,6 @@
 const MashupVisualizer = () => {
     return (
-        <section>MashupVisualizer</section>
+        <section style={{ flexGrow: 1 }}>MashupVisualizer</section>
     )
 }
 export default MashupVisualizer
