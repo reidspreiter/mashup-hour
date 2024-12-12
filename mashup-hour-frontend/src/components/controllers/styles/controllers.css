@@ -78,7 +78,7 @@ KNOB
 }
 
 /*
-TOOLTIP 
+TOOLTIP
 */
 .tooltip-container {
   display: inline-flex;
@@ -98,7 +98,9 @@ TOOLTIP
   padding: 4px;
   opacity: 0;
   visibility: hidden;
-  transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+  transition:
+    opacity var(--transition-speed) ease,
+    visibility var(--transition-speed) ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
   pointer-events: none;
@@ -138,7 +140,7 @@ CASING
   margin-bottom: 6px;
 }
 
-.subcasing>* {
+.subcasing > * {
   margin: 0px 2px;
 }
 

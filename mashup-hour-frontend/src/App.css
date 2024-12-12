@@ -34,7 +34,7 @@
   flex-grow: 0;
 }
 
-.main-column-section>* {
+.main-column-section > * {
   flex: 1;
   margin: 0px 2px 2px;
   justify-content: center;

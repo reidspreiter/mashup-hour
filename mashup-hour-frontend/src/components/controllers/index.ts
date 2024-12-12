@@ -1,14 +1,26 @@
-import Switch from "./Switch";
-import Knob from "./Knob";
-import PlayButton from "./PlayButton";
-import Tooltip from "./Tooltip";
 import Button from "./Button";
-import SimpleSwitch from "./SimpleSwitch";
 import Casing from "./Casing";
-import PressAndHold from "./PressAndHold";
-import PlayBar from "./PlayBar";
 import EmptyCasing from "./EmptyCasing";
+import Knob from "./Knob";
+import PlayBar from "./PlayBar";
+import PlayButton from "./PlayButton";
+import PressAndHold from "./PressAndHold";
 import SimpleButton from "./SimpleButton";
+import SimpleSwitch from "./SimpleSwitch";
+import Switch from "./Switch";
+import Tooltip from "./Tooltip";
 
-export { Switch, SimpleSwitch, Knob, PlayButton, Tooltip, Button, Casing, PressAndHold, PlayBar, EmptyCasing, SimpleButton };
 export * from "./types";
+export {
+  Button,
+  Casing,
+  EmptyCasing,
+  Knob,
+  PlayBar,
+  PlayButton,
+  PressAndHold,
+  SimpleButton,
+  SimpleSwitch,
+  Switch,
+  Tooltip,
+};

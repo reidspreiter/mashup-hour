@@ -1,4 +1,4 @@
 export enum TrackSide {
-    LEFT,
-    RIGHT,
+  LEFT,
+  RIGHT,
 }

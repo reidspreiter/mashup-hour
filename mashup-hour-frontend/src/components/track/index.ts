@@ -5,4 +5,4 @@ import TrackPlayer from "./TrackPlayer";
 import TrackSampler from "./TrackSampler";
 
 export * from "./types";
-export { Track, TrackInfo, TrackManipulator, TrackPlayer, TrackSampler }
+export { Track, TrackInfo, TrackManipulator, TrackPlayer, TrackSampler };

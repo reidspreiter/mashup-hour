@@ -1,12 +1,11 @@
-import { createContext, useState, useEffect } from 'react';
-import { MashupAssetsSchema, MashupAssets } from "./schemas/mashup-hour";
-import Mashup from './components/mashup/Mashup';
-import { Track, TrackSide } from "./components/track";
-import { data } from './sampleData';
+import { useEffect, useState } from "react";
 import "./app.css";
+import Mashup from "./components/mashup/Mashup";
+import { Track, TrackSide } from "./components/track";
+import { data } from "./sampleData";
+import { MashupAssets } from "./schemas/mashup-hour";
 
 function App() {
-
   const [assets, setAssets] = useState<MashupAssets[]>(data);
   const [trackIndex, setTrackIndex] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true); // New state to track loading
@@ -26,12 +25,11 @@ function App() {
 
   useEffect(() => {
     retrieveAssets();
-  }, [])
+  }, []);
 
   if (loading) {
-    return <div>Loading...</div>
+    return <div>Loading...</div>;
   }
-
 
   return (
     <div className="app-container">
@@ -39,7 +37,7 @@ function App() {
       <Mashup assets={assets} trackIndex={trackIndex} trackLimit={trackLimit} setTrackIndex={setTrackIndex} />
       <Track assets={assets} trackIndex={trackIndex} trackSide={TrackSide.RIGHT} />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
