@@ -1,29 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
-import { TrackInfo, TrackManipulator, TrackPlayer, TrackSide } from ".";
-import { MashupAssets } from "../../schemas/mashup-hour";
+import { useEffect, useMemo } from "react";
+import { TrackInfo, TrackManipulator, TrackPlayer } from ".";
+import { TrackAsset } from "../../schemas/mashup-hour";
 import { Player } from "../player";
 
 interface TrackProps {
-  assets: MashupAssets[];
+  trackAssets: TrackAsset[];
   trackIndex: number;
-  trackSide: TrackSide;
 }
 
-const Track: React.FC<TrackProps> = ({ assets, trackIndex, trackSide }) => {
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-
-  const trackAssets = useMemo(() => {
-    return assets.map((asset) => (trackSide === TrackSide.LEFT ? asset.track1 : asset.track2));
-  }, [assets, trackSide]);
-
+const Track: React.FC<TrackProps> = ({ trackAssets, trackIndex }) => {
   const player = useMemo(() => {
-    return new Player(trackAssets[trackIndex].title, trackAssets[trackIndex].preview, setIsPlaying);
+    return new Player(trackAssets[trackIndex].title, trackAssets[trackIndex].preview);
   }, [trackAssets, trackIndex]);
 
   useEffect(() => {
     return () => {
       player.togglePlayer(false);
-      setIsPlaying(false);
     };
   }, [player]);
 
@@ -31,7 +23,7 @@ const Track: React.FC<TrackProps> = ({ assets, trackIndex, trackSide }) => {
     <div className="main-column" onContextMenu={(e) => e.preventDefault()}>
       <TrackInfo trackAssets={trackAssets} trackIndex={trackIndex} />
       <TrackManipulator />
-      <TrackPlayer player={player} isPlaying={isPlaying} setIsPlaying={setIsPlaying} />
+      <TrackPlayer player={player} />
     </div>
   );
 };

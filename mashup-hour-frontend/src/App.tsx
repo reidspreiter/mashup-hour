@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./app.css";
 import Mashup from "./components/mashup/Mashup";
-import { Track, TrackSide } from "./components/track";
+import { Track } from "./components/track";
 import { data } from "./sampleData";
 import { MashupAssets } from "./schemas/mashup-hour";
 
@@ -33,9 +33,14 @@ function App() {
 
   return (
     <div className="app-container">
-      <Track assets={assets} trackIndex={trackIndex} trackSide={TrackSide.LEFT} />
-      <Mashup assets={assets} trackIndex={trackIndex} trackLimit={trackLimit} setTrackIndex={setTrackIndex} />
-      <Track assets={assets} trackIndex={trackIndex} trackSide={TrackSide.RIGHT} />
+      <Track trackAssets={assets.map((asset) => asset.track1)} trackIndex={trackIndex} />
+      <Mashup
+        mashedTrackAssets={assets.map((asset) => asset.mashedTrack)}
+        trackIndex={trackIndex}
+        trackLimit={trackLimit}
+        setTrackIndex={setTrackIndex}
+      />
+      <Track trackAssets={assets.map((asset) => asset.track2)} trackIndex={trackIndex} />
     </div>
   );
 }
