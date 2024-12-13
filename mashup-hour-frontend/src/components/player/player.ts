@@ -23,12 +23,14 @@ export class Player {
   private timeReference: number = 0;
   private positionUpdateIntervalId?: number;
   private isSeeking: boolean = false;
+  private stopTriggeredManually: boolean = false;
 
   private _onPositionUpdate?: PositionCallback;
   private _onEndBoundUpdate?: PositionCallback;
   private _onStartBoundUpdate?: PositionCallback;
 
   public restartOnPause: boolean = false;
+  public reverseRelativeToEnd: boolean = false;
 
   constructor(name: string, preview: string, setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>) {
     this.name = name;
@@ -53,7 +55,10 @@ export class Player {
         this.isSeeking = false;
       } else {
         setIsPlaying(false);
-        this.refreshPosition(true);
+        clearInterval(this.positionUpdateIntervalId);
+        this.positionUpdateIntervalId = undefined;
+        this.refreshPosition(true, this.stopTriggeredManually);
+        this.stopTriggeredManually = false;
       }
     };
 
@@ -65,23 +70,16 @@ export class Player {
   public togglePlayer = (isEnabled: boolean) => {
     if (isEnabled) {
       Tone.start();
-      if (this.restartOnPause) {
-        this._position = (this.reverse ? this._endBound : this._startBound) * 1000;
-      } else {
-        this._position = this._position === 0 && this.reverse ? this._endBound * 1000 : this._position;
-      }
-
+      this._position = this._position === 0 && this.reverse ? this._endBound * 1000 : this._position;
       this.player.start(undefined, this.reverse ? this.duration - this._position / 1000 : this._position / 1000);
 
       this.timeReference = performance.now();
-      if (this.positionUpdateIntervalId === undefined) {
-        this.positionUpdateIntervalId = setInterval(() => {
-          this.refreshPosition();
-        }, 500);
-      }
+      clearInterval(this.positionUpdateIntervalId)
+      this.positionUpdateIntervalId = setInterval(() => {
+        this.refreshPosition();
+      }, 500);
     } else {
-      clearInterval(this.positionUpdateIntervalId);
-      this.positionUpdateIntervalId = undefined;
+      this.stopTriggeredManually = true;
       this.player.stop();
     }
   };
@@ -198,8 +196,8 @@ export class Player {
     this.refreshPosition();
   };
 
-  private refreshPosition(forceRefresh: boolean = false) {
-    if (this.isStarted || forceRefresh) {
+  private refreshPosition(calledOnStop: boolean = false, stopTriggeredManually: boolean = false) {
+    if (this.isStarted || (calledOnStop && stopTriggeredManually && !this.restartOnPause)) {
       const now = performance.now();
       if (this.reverse) {
         this._position -= (now - this.timeReference) * this.player.playbackRate;
@@ -213,7 +211,7 @@ export class Player {
         }
       }
       this.timeReference = now;
-    } else if (!this.isStarted && this.restartOnPause) {
+    } else {
       this._position = (this.reverse ? this._endBound : this._startBound) * 1000;
     }
     this._onPositionUpdate?.(this._position / 1000 / this.duration);
