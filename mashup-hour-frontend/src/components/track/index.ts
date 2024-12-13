@@ -1,8 +1,5 @@
-import Track from "./Track";
-import TrackInfo from "./TrackInfo";
-import TrackManipulator from "./TrackManipulator";
-import TrackPlayer from "./TrackPlayer";
-import TrackSampler from "./TrackSampler";
-
-export * from "./types";
-export { Track, TrackInfo, TrackManipulator, TrackPlayer, TrackSampler };
+export { default as Track } from "./Track";
+export { default as TrackInfo } from "./TrackInfo";
+export { default as TrackManipulator } from "./TrackManipulator";
+export { default as TrackPlayer } from "./TrackPlayer";
+export { default as TrackSampler } from "./TrackSampler";
