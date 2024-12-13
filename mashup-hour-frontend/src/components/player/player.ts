@@ -22,8 +22,9 @@ export class Player {
   private _position: number = 0;
   private timeReference: number = 0;
   private positionUpdateIntervalId?: number;
-  private isSeeking: boolean = false;
+  private ignoreStopCounter: number = 0;
   private stopTriggeredManually: boolean = false;
+  private isStarted: boolean = false;
 
   private _onPositionUpdate?: PositionCallback;
   private _onEndBoundUpdate?: PositionCallback;
@@ -32,7 +33,7 @@ export class Player {
   public restartOnPause: boolean = false;
   public reverseRelativeToEnd: boolean = false;
 
-  constructor(name: string, preview: string, setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>) {
+  constructor(name: string, preview: string) {
     this.name = name;
 
     const binaryPreview = atob(preview);
@@ -50,20 +51,23 @@ export class Player {
     }).toDestination();
 
     this.player = new Tone.Player(this.previewUrl).connect(this.playbackSpeedPitcher);
-    this.player.onstop = () => {
-      if (this.isSeeking) {
-        this.isSeeking = false;
-      } else {
-        setIsPlaying(false);
-        clearInterval(this.positionUpdateIntervalId);
-        this.positionUpdateIntervalId = undefined;
-        this.refreshPosition(true, this.stopTriggeredManually);
-        this.stopTriggeredManually = false;
-      }
-    };
-
     this.player.buffer.onload = () => {
       this._endBound = this.player.buffer.duration;
+    };
+  }
+
+  set onStop(onStop: () => void) {
+    this.player.onstop = () => {
+      if (this.ignoreStopCounter > 0) {
+        this.ignoreStopCounter--;
+      } else {
+        onStop();
+        clearInterval(this.positionUpdateIntervalId);
+        this.positionUpdateIntervalId = undefined;
+        this.refreshPositionStopped(this.stopTriggeredManually);
+        this.stopTriggeredManually = false;
+        this.isStarted = false;
+      }
     };
   }
 
@@ -71,12 +75,14 @@ export class Player {
     if (isEnabled) {
       Tone.start();
       this._position = this._position === 0 && this.reverse ? this._endBound * 1000 : this._position;
+      this.isStarted = true;
+
       this.player.start(undefined, this.reverse ? this.duration - this._position / 1000 : this._position / 1000);
 
       this.timeReference = performance.now();
-      clearInterval(this.positionUpdateIntervalId)
+      clearInterval(this.positionUpdateIntervalId);
       this.positionUpdateIntervalId = setInterval(() => {
-        this.refreshPosition();
+        this.refreshPositionStarted();
       }, 500);
     } else {
       this.stopTriggeredManually = true;
@@ -87,7 +93,7 @@ export class Player {
   private seek(position: number) {
     // Tone.Player calls the onStop function when seeking
     // this.isSeeking is reset within the onStop callback to ensure it is called before isSeeking is reset
-    this.isSeeking = true;
+    this.ignoreStopCounter++;
     this.player.seek(this.reverse ? this.duration - position : position);
     this.timeReference = performance.now();
     this._position = position * 1000;
@@ -103,6 +109,9 @@ export class Player {
     const startPercent = Math.random() * (1 - durationPercent);
     const endPercent = startPercent + durationPercent;
     this.setBounds(startPercent, endPercent);
+    if (this.isStarted) {
+      this.seek(this.reverse ? this._endBound : this._startBound);
+    }
   };
 
   public randomizeBoundPosition = () => {
@@ -110,6 +119,9 @@ export class Player {
     const startPercent = Math.random() * (1 - durationPercent);
     const endPercent = startPercent + durationPercent;
     this.setBounds(startPercent, endPercent);
+    if (this.isStarted) {
+      this.seek(this.reverse ? this._endBound : this._startBound);
+    }
   };
 
   set onPositionUpdate(onPositionUpdate: PositionCallback) {
@@ -134,7 +146,13 @@ export class Player {
 
   set reverse(reverse: boolean) {
     this.player.reverse = reverse;
-    this.refreshPosition();
+    if (this.reverseRelativeToEnd) {
+      this._position = this.duration * 1000 - this._position;
+      this.timeReference = performance.now();
+      this._onPositionUpdate?.(this._position / 1000 / this.duration);
+    } else {
+      this.seek(this._position / 1000);
+    }
   }
 
   set playbackRate(rate: number) {
@@ -142,7 +160,7 @@ export class Player {
       this.playbackSpeedPitcher.pitch = -12 * Math.log2(rate);
     }
     this.player.playbackRate = rate;
-    this.refreshPosition();
+    this.refreshPositionStartedNoUpdate();
   }
 
   set volume(volume: number) {
@@ -164,10 +182,6 @@ export class Player {
     }
   }
 
-  get isStarted(): boolean {
-    return this.player.state === "started";
-  }
-
   get duration(): number {
     return this.player.buffer.duration;
   }
@@ -176,14 +190,20 @@ export class Player {
     this.player.loopStart = percent * this.duration;
     this._startBound = percent * this.duration;
     this._onStartBoundUpdate?.(percent);
-    this.refreshPosition();
+    this.refreshPositionStarted();
+    if (!this.isStarted && !this.reverse) {
+      this._position = this._startBound * 1000;
+    }
   }
 
   set endBound(percent: number) {
     this.player.loopEnd = percent * this.duration;
     this._endBound = percent * this.duration;
     this._onEndBoundUpdate?.(percent);
-    this.refreshPosition();
+    this.refreshPositionStarted();
+    if (!this.isStarted && this.reverse) {
+      this._position = this._endBound * 1000;
+    }
   }
 
   public setBounds = (startPercent: number, endPercent: number) => {
@@ -193,11 +213,11 @@ export class Player {
     this._endBound = endPercent * duration;
     this._onStartBoundUpdate?.(startPercent);
     this._onEndBoundUpdate?.(endPercent);
-    this.refreshPosition();
+    this.refreshPositionStarted();
   };
 
-  private refreshPosition(calledOnStop: boolean = false, stopTriggeredManually: boolean = false) {
-    if (this.isStarted || (calledOnStop && stopTriggeredManually && !this.restartOnPause)) {
+  private refreshPositionStartedNoUpdate(force: boolean = false) {
+    if (this.isStarted || force) {
       const now = performance.now();
       if (this.reverse) {
         this._position -= (now - this.timeReference) * this.player.playbackRate;
@@ -211,9 +231,21 @@ export class Player {
         }
       }
       this.timeReference = now;
+    }
+  }
+
+  private refreshPositionStopped(triggeredManually: boolean) {
+    if (triggeredManually && !this.restartOnPause) {
+      this.refreshPositionStarted(true);
     } else {
       this._position = (this.reverse ? this._endBound : this._startBound) * 1000;
+      this._onPositionUpdate?.(this._position / 1000 / this.duration);
     }
+  }
+
+  // probably get rid of force once bounds behavior is handled
+  private refreshPositionStarted(force: boolean = false) {
+    this.refreshPositionStartedNoUpdate(force);
     this._onPositionUpdate?.(this._position / 1000 / this.duration);
   }
 
