@@ -32,7 +32,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({ player, isPlaying, setIsPlayi
             icon={IoSpeedometer}
           />
         </Casing>
-        <Casing sub2={<SimpleSwitch name="reverse relative to end" onClick={() => {}} />}>
+        <Casing sub2={<SimpleSwitch name="reverse relative to end" onClick={(isEnabled) => player.reverseRelativeToEnd = isEnabled} />}>
           <Switch
             name="reverse"
             icon={IoArrowBackSharp}
