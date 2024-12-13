@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { IoIosSkipBackward, IoIosSkipForward } from "react-icons/io";
 import { Button, PlayButton } from "../controllers";
 
@@ -9,8 +8,6 @@ interface MashupSelectorProps {
 }
 
 const MashupSelector: React.FC<MashupSelectorProps> = ({ trackIndex, setTrackIndex, trackLimit }) => {
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-
   const temp = (isEnabled: boolean) => {};
 
   return (
@@ -20,7 +17,7 @@ const MashupSelector: React.FC<MashupSelectorProps> = ({ trackIndex, setTrackInd
         icon={IoIosSkipBackward}
         onClick={() => setTrackIndex(trackLimit + trackIndex - 1)}
       />
-      <PlayButton onClick={temp} isPlaying={isPlaying} setIsPlaying={setIsPlaying} />
+      <PlayButton onClick={temp} />
       <Button name="next tracks" icon={IoIosSkipForward} onClick={() => setTrackIndex((trackIndex + 1) % trackLimit)} />
     </section>
   );
