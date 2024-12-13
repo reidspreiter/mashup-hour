@@ -26,9 +26,11 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
   const [isRightClick, setIsRightClick] = useState<boolean>(false);
   const sliderRef = useRef<HTMLDivElement | null>(null);
 
-  player.onPositionUpdate = (percent: number) => setSeekPercentage(percent);
-  player.onEndBoundUpdate = (percent: number) => setEndPercentage(percent);
-  player.onStartBoundUpdate = (percent: number) => setStartPercentage(percent);
+  useEffect(() => {
+    player.onPositionUpdate = (percent: number) => setSeekPercentage(percent);
+    player.onEndBoundUpdate = (percent: number) => setEndPercentage(percent);
+    player.onStartBoundUpdate = (percent: number) => setStartPercentage(percent);
+  }, [player]);
 
   const getLinearGradientString = useCallback((): string => {
     if (player.reverse) {
@@ -178,10 +180,6 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
           onMouseDown={(e) => startDrag(e, PlayBarDraggable.END)}
         ></div>
       </Tooltip>
-
-      {/* <div
-                playbar if I ever figure out how to do it accurately
-            /> */}
     </div>
   );
 };
