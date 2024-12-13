@@ -139,7 +139,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
         </Tooltip>
       )}
       <Tooltip
-        text={player.reverse ? "end" : "start"}
+        text="start"
         showCondition={dragging === null}
         style={{
           left: `${startPercentage * 100}%`,
@@ -150,7 +150,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
         <div
           className="playbar-bound"
           style={{
-            backgroundColor: `${player.reverse ? "red" : "green"}`,
+            backgroundColor: "green",
             width: `${boundWidth}px`,
             height: `${posWidth / 2}px`,
             transform: `${dragging === PlayBarDraggable.START ? "scale(var(--scale-increase))" : ""}`,
@@ -159,7 +159,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
         ></div>
       </Tooltip>
       <Tooltip
-        text={player.reverse ? "start" : "end"}
+        text="end"
         showCondition={dragging === null}
         style={{
           left: `${endPercentage * 100}%`,
@@ -170,7 +170,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
         <div
           className="playbar-bound"
           style={{
-            backgroundColor: `${player.reverse ? "green" : "red"}`,
+            backgroundColor: "red",
             width: `${boundWidth}px`,
             height: `${posWidth / 2}px`,
             transform: `${dragging === PlayBarDraggable.END ? "scale(var(--scale-increase))" : ""}`,
