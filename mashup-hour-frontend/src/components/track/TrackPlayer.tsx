@@ -1,14 +1,11 @@
 import { IoArrowBackSharp, IoRepeatSharp, IoSpeedometer, IoVolumeMedium } from "react-icons/io5";
 import { Casing, Knob, PlayBar, PlayButton, PressAndHold, SimpleButton, SimpleSwitch, Switch } from "../controllers";
 import { Player } from "../player";
-
 interface TrackPlayerProps {
   player: Player;
-  isPlaying: boolean;
-  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const TrackPlayer: React.FC<TrackPlayerProps> = ({ player, isPlaying, setIsPlaying }) => {
+const TrackPlayer: React.FC<TrackPlayerProps> = ({ player }) => {
   return (
     <section>
       <div className="main-column-section" style={{ marginBottom: "10px" }}>
@@ -32,7 +29,14 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({ player, isPlaying, setIsPlayi
             icon={IoSpeedometer}
           />
         </Casing>
-        <Casing sub2={<SimpleSwitch name="reverse relative to end" onClick={(isEnabled) => player.reverseRelativeToEnd = isEnabled} />}>
+        <Casing
+          sub2={
+            <SimpleSwitch
+              name="reverse relative to end"
+              onClick={(isEnabled) => (player.reverseRelativeToEnd = isEnabled)}
+            />
+          }
+        >
           <Switch
             name="reverse"
             icon={IoArrowBackSharp}
@@ -48,7 +52,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({ player, isPlaying, setIsPlayi
             />
           }
         >
-          <PlayButton onClick={player.togglePlayer} isPlaying={isPlaying} setIsPlaying={setIsPlaying} />
+          <PlayButton onClick={player.togglePlayer} player={player} />
         </Casing>
         <Casing
           sub1={<SimpleButton name="randomize playbar bounds" onClick={player.randomizeBounds} />}
