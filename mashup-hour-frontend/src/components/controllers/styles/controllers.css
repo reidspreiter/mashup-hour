@@ -160,19 +160,26 @@ PLAYBAR
 .playbar-pos {
   position: absolute;
   border-radius: 50%;
+  width: 8px;
+  height: 8px;
   cursor: pointer;
-  background-color: var(--white);
+  background-color: var(--pink);
   transition: transform var(--transition-speed) ease;
+}
+
+.playbar-pos:hover {
+  transform: scale(2);
 }
 
 .playbar-bound {
   position: absolute;
   border-radius: 2px;
+  height: 8px;
+  width: 12px;
   cursor: ew-resize;
   transition: transform var(--transition-speed) ease;
 }
 
-.playbar-pos:hover,
 .playbar-bound:hover {
-  transform: scale(var(--scale-increase));
+  transform: scale(1.5);
 }
