@@ -1,4 +1,5 @@
 import { MashedTrackAsset } from "../../schemas/mashup-hour";
+import { TextScrollOnOverflow } from "../common";
 
 interface MashupInfoProps {
   mashedTrackAssets: MashedTrackAsset[];
@@ -9,8 +10,8 @@ const MashupInfo: React.FC<MashupInfoProps> = ({ mashedTrackAssets, trackIndex }
   const mashedTrack = mashedTrackAssets[trackIndex];
   return (
     <section>
-      <h2 className="title">{mashedTrack.title}</h2>
-      <p className="artist">{mashedTrack.artist}</p>
+      <TextScrollOnOverflow textClass="title">{mashedTrack.title}</TextScrollOnOverflow>
+      <TextScrollOnOverflow textClass="subtitle">{mashedTrack.artist}</TextScrollOnOverflow>
     </section>
   );
 };

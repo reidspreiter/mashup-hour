@@ -1,4 +1,5 @@
 import { TrackAsset } from "../../schemas/mashup-hour";
+import { TextScrollOnOverflow } from "../common";
 
 interface TrackInfoProps {
   trackAssets: TrackAsset[];
@@ -9,8 +10,8 @@ const TrackInfo: React.FC<TrackInfoProps> = ({ trackAssets, trackIndex }) => {
   const track = trackAssets[trackIndex];
   return (
     <section>
-      <h2>{track.title}</h2>
-      <p>{track.artist}</p>
+      <TextScrollOnOverflow textClass="title">{track.title}</TextScrollOnOverflow>
+      <TextScrollOnOverflow textClass="subtitle">{track.artist}</TextScrollOnOverflow>
     </section>
   );
 };
