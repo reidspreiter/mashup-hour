@@ -1,6 +1,6 @@
 import { IoArrowBackSharp, IoRepeatSharp, IoSpeedometer, IoVolumeMedium } from "react-icons/io5";
+import { Player } from "../../player";
 import { Casing, Knob, PlayBar, PlayButton, PressAndHold, SimpleButton, SimpleSwitch, Switch } from "../controllers";
-import { Player } from "../player";
 interface TrackPlayerProps {
   player: Player;
 }
@@ -29,14 +29,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({ player }) => {
             icon={IoSpeedometer}
           />
         </Casing>
-        <Casing
-          sub2={
-            <SimpleSwitch
-              name="reverse relative to end"
-              onClick={(isEnabled) => (player.reverseRelativeToEnd = isEnabled)}
-            />
-          }
-        >
+        <Casing sub2={<SimpleSwitch name="reflect" onClick={(isEnabled) => (player.reflect = isEnabled)} />}>
           <Switch
             name="reverse"
             icon={IoArrowBackSharp}

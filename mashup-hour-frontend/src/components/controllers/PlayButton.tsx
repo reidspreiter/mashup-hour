@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { IoPauseCircleSharp, IoPlayCircleSharp } from "react-icons/io5";
-import { Player } from "../player";
+import { Player } from "../../player";
 import Tooltip from "./Tooltip";
 import "./styles/controllers.css";
 import { EnablerFunc } from "./types";

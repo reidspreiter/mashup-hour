@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Player } from "../player";
+import { Player } from "../../player";
 import { clamp } from "../util";
 import "./styles/controllers.css";
 import Tooltip from "./Tooltip";
@@ -14,11 +14,7 @@ enum PlayBarDraggable {
   SEEK,
 }
 
-const posWidth = 16;
-const boundWidth = 10;
-
 const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
-  const [isHovering, setIsHovering] = useState<boolean>(false);
   const [seekPercentage, setSeekPercentage] = useState<number>(0);
   const [startPercentage, setStartPercentage] = useState<number>(0);
   const [endPercentage, setEndPercentage] = useState<number>(1);
@@ -26,25 +22,40 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
   const [isRightClick, setIsRightClick] = useState<boolean>(false);
   const sliderRef = useRef<HTMLDivElement | null>(null);
 
+  console.log(seekPercentage);
+
   useEffect(() => {
-    player.onPositionUpdate = (percent: number) => setSeekPercentage(percent);
+    player.onPositionUpdate = (percent: number) => {
+      if (dragging !== PlayBarDraggable.SEEK) {
+        setSeekPercentage(percent);
+      }
+    };
     player.onEndBoundUpdate = (percent: number) => setEndPercentage(percent);
     player.onStartBoundUpdate = (percent: number) => setStartPercentage(percent);
-  }, [player]);
+  }, [player, dragging]);
 
   const getLinearGradientString = useCallback((): string => {
-    if (player.reverse) {
-      return `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, transparent ${startPercentage * 100}%, transparent ${seekPercentage * 100}%, #9a9a9a ${seekPercentage * 100}%, #9a9a9a ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`;
-    } else {
-      return `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, #9a9a9a ${startPercentage * 100}%, #9a9a9a ${seekPercentage * 100}%, transparent ${seekPercentage * 100}%, transparent ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`;
-    }
-  }, [player, startPercentage, seekPercentage, endPercentage]);
+    return `linear-gradient(to right, #121212 0%, #121212 ${startPercentage * 100}%, transparent ${startPercentage * 100}%, transparent ${endPercentage * 100}%, #121212 ${endPercentage * 100}%, #121212 100%)`;
+  }, [startPercentage, endPercentage]);
 
-  const stopDrag = () => {
-    setDragging(null);
-    document.body.classList.remove("sliding");
-    document.body.classList.remove("pointing");
-  };
+  const endDrag = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      if (isRightClick) {
+        player.setBounds(startPercentage, endPercentage);
+      } else if (dragging === PlayBarDraggable.SEEK) {
+        player.seek(seekPercentage);
+      } else if (dragging === PlayBarDraggable.START) {
+        player.startBound = startPercentage;
+      } else {
+        player.endBound = endPercentage;
+      }
+      setDragging(null);
+      document.body.classList.remove("sliding");
+      document.body.classList.remove("pointing");
+    },
+    [isRightClick, player, endPercentage, startPercentage, dragging],
+  );
 
   const startDrag = (e: React.MouseEvent, draggable: PlayBarDraggable) => {
     setDragging(draggable);
@@ -54,14 +65,6 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
     } else {
       document.body.classList.add("pointing");
     }
-  };
-
-  const onMouseEnter = () => {
-    setIsHovering(true);
-  };
-
-  const onMouseLeave = () => {
-    setIsHovering(false);
   };
 
   const onDrag = useCallback(
@@ -80,66 +83,75 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
             const newEndPercentage = endPercentage - d;
             const newStartPercentage = startPercentage - d;
             if (newEndPercentage >= 0 && newEndPercentage <= 1 && newStartPercentage >= 0 && newStartPercentage <= 1) {
-              player.setBounds(newStartPercentage, newEndPercentage);
+              setEndPercentage(newEndPercentage);
+              setStartPercentage(newStartPercentage);
             }
           } else if (dragging === PlayBarDraggable.END && newPercentage > startPercentage) {
-            player.endBound = newPercentage;
+            setEndPercentage(newPercentage);
           } else if (dragging === PlayBarDraggable.START && newPercentage < endPercentage) {
-            player.startBound = newPercentage;
+            setStartPercentage(newPercentage);
           }
         }
       }
     },
-    [dragging, endPercentage, startPercentage, player, isRightClick],
+    [dragging, endPercentage, startPercentage, isRightClick],
   );
 
   useEffect(() => {
     if (dragging !== null) {
       document.addEventListener("mousemove", onDrag);
-      document.addEventListener("mouseup", stopDrag);
+      document.addEventListener("mouseup", endDrag);
     } else {
       document.removeEventListener("mousemove", onDrag);
-      document.removeEventListener("mouseup", stopDrag);
+      document.removeEventListener("mouseup", endDrag);
     }
 
-    // remove event listeners when component unmounts
     return () => {
       document.removeEventListener("mousemove", onDrag);
-      document.removeEventListener("mouseup", stopDrag);
+      document.removeEventListener("mouseup", endDrag);
     };
-  }, [dragging, onDrag]);
+  }, [dragging, onDrag, endDrag]);
+
+  const seek = useCallback(
+    (e: React.MouseEvent) => {
+      if (dragging === null) {
+        const rect = sliderRef.current?.getBoundingClientRect();
+        if (rect !== undefined) {
+          const sliderWidth = rect.width;
+          const mousePos = clamp(0, sliderWidth, e.clientX - rect.left);
+          const newPercentage = mousePos / sliderWidth;
+          player.seek(newPercentage);
+        }
+      }
+    },
+    [player],
+  );
 
   return (
     <div
       ref={sliderRef}
       className="playbar"
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      onContextMenu={(e) => e.preventDefault()}
+      onMouseUp={seek}
       style={{
         backgroundImage: getLinearGradientString(),
       }}
     >
-      {(isHovering || dragging !== null) && (
-        <Tooltip
-          text="seek"
-          showCondition={dragging === null}
+      <Tooltip
+        text="seek"
+        showCondition={dragging === null}
+        style={{
+          left: `${seekPercentage * 100}%`,
+          position: "absolute",
+        }}
+      >
+        <div
+          className="playbar-pos"
           style={{
-            left: `${seekPercentage * 100}%`,
-            position: "absolute",
+            transform: `${dragging === PlayBarDraggable.SEEK ? "scale(2)" : ""}`,
           }}
-        >
-          <div
-            className="playbar-pos"
-            style={{
-              width: `${posWidth}px`,
-              height: `${posWidth}px`,
-              transform: `${dragging === PlayBarDraggable.SEEK ? "scale(var(--scale-increase))" : ""}`,
-            }}
-            onMouseDown={(e) => startDrag(e, PlayBarDraggable.SEEK)}
-          ></div>
-        </Tooltip>
-      )}
+          onMouseDown={(e) => startDrag(e, PlayBarDraggable.SEEK)}
+        ></div>
+      </Tooltip>
       <Tooltip
         text="start"
         showCondition={dragging === null}
@@ -153,9 +165,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
           className="playbar-bound"
           style={{
             backgroundColor: "green",
-            width: `${boundWidth}px`,
-            height: `${posWidth / 2}px`,
-            transform: `${dragging === PlayBarDraggable.START ? "scale(var(--scale-increase))" : ""}`,
+            transform: `${dragging === PlayBarDraggable.START ? "scale(1.5)" : ""}`,
           }}
           onMouseDown={(e) => startDrag(e, PlayBarDraggable.START)}
         ></div>
@@ -173,9 +183,7 @@ const PlayBar: React.FC<PlayBarProps> = ({ player }) => {
           className="playbar-bound"
           style={{
             backgroundColor: "red",
-            width: `${boundWidth}px`,
-            height: `${posWidth / 2}px`,
-            transform: `${dragging === PlayBarDraggable.END ? "scale(var(--scale-increase))" : ""}`,
+            transform: `${dragging === PlayBarDraggable.END ? "scale(1.5)" : ""}`,
           }}
           onMouseDown={(e) => startDrag(e, PlayBarDraggable.END)}
         ></div>

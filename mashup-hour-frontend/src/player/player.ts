@@ -31,7 +31,7 @@ export class Player {
   private _onStartBoundUpdate?: PositionCallback;
 
   public restartOnPause: boolean = false;
-  public reverseRelativeToEnd: boolean = false;
+  public reflect: boolean = false;
 
   constructor(name: string, preview: string) {
     this.name = name;
@@ -62,13 +62,27 @@ export class Player {
         this.ignoreStopCounter--;
       } else {
         onStop();
-        clearInterval(this.positionUpdateIntervalId);
+        this.stopPositionInterval();
         this.positionUpdateIntervalId = undefined;
         this.refreshPositionStopped(this.stopTriggeredManually);
         this.stopTriggeredManually = false;
         this.isStarted = false;
       }
     };
+  }
+
+  private startPositionInterval() {
+    if (this.isStarted) {
+      this.timeReference = performance.now();
+      this.stopPositionInterval();
+      this.positionUpdateIntervalId = setInterval(() => {
+        this.refreshPositionStarted();
+      }, 500);
+    }
+  }
+
+  private stopPositionInterval() {
+    clearInterval(this.positionUpdateIntervalId);
   }
 
   public togglePlayer = (isEnabled: boolean) => {
@@ -78,30 +92,33 @@ export class Player {
       this.isStarted = true;
 
       this.player.start(undefined, this.reverse ? this.duration - this._position / 1000 : this._position / 1000);
-
-      this.timeReference = performance.now();
-      clearInterval(this.positionUpdateIntervalId);
-      this.positionUpdateIntervalId = setInterval(() => {
-        this.refreshPositionStarted();
-      }, 500);
+      this.startPositionInterval();
     } else {
       this.stopTriggeredManually = true;
+      this.ignoreStopCounter = 0;
       this.player.stop();
     }
   };
 
-  private seek(position: number) {
+  public seek(percentage: number) {
+    this._seek(percentage * this.duration);
+  }
+
+  private _seek(position: number) {
     // Tone.Player calls the onStop function when seeking
-    // this.isSeeking is reset within the onStop callback to ensure it is called before isSeeking is reset
-    this.ignoreStopCounter++;
-    this.player.seek(this.reverse ? this.duration - position : position);
-    this.timeReference = performance.now();
+    // use ignoreStopCounter to prevent the player from stopping
+    this.stopPositionInterval();
     this._position = position * 1000;
-    this._onPositionUpdate?.(position);
+    this._onPositionUpdate?.(position / this.duration);
+    if (this.isStarted) {
+      this.ignoreStopCounter++;
+      this.player.seek(this.reverse ? this.duration - position : position);
+      this.startPositionInterval();
+    }
   }
 
   public restart = () => {
-    this.seek(this.reverse ? this._endBound : this._startBound);
+    this._seek(this.reverse ? this._endBound : this._startBound);
   };
 
   public randomizeBounds = () => {
@@ -110,7 +127,7 @@ export class Player {
     const endPercent = startPercent + durationPercent;
     this.setBounds(startPercent, endPercent);
     if (this.isStarted) {
-      this.seek(this.reverse ? this._endBound : this._startBound);
+      this._seek(this.reverse ? this._endBound : this._startBound);
     }
   };
 
@@ -120,7 +137,7 @@ export class Player {
     const endPercent = startPercent + durationPercent;
     this.setBounds(startPercent, endPercent);
     if (this.isStarted) {
-      this.seek(this.reverse ? this._endBound : this._startBound);
+      this._seek(this.reverse ? this._endBound : this._startBound);
     }
   };
 
@@ -145,13 +162,12 @@ export class Player {
   }
 
   set reverse(reverse: boolean) {
+    this.stopPositionInterval();
     this.player.reverse = reverse;
-    if (this.reverseRelativeToEnd) {
-      this._position = this.duration * 1000 - this._position;
-      this.timeReference = performance.now();
-      this._onPositionUpdate?.(this._position / 1000 / this.duration);
+    if (this.reflect) {
+      this._seek((this.duration * 1000 - this._position) / 1000);
     } else {
-      this.seek(this._position / 1000);
+      this._seek(this._position / 1000);
     }
   }
 

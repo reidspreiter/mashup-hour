@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { TrackInfo, TrackManipulator, TrackPlayer } from ".";
+import { Player } from "../../player";
 import { TrackAsset } from "../../schemas/mashup-hour";
-import { Player } from "../player";
 
 interface TrackProps {
   trackAssets: TrackAsset[];
